@@ -1,5 +1,72 @@
 // ========== MODE KISAH ISLAMI ==========
 
+// ==================== FUNGSI PARSING KHUSUS ISLAMI ====================
+function parseNarasiIslami(rawText) {
+    // Hapus instruksi-instruksi yang sering muncul
+    let cleanText = rawText
+        .replace(/Pembukaan yang menarik:?\s*/gi, '')
+        .replace(/Inti kisah:?\s*/gi, '')
+        .replace(/Hikmah yang bisa diambil:?\s*/gi, '')
+        .replace(/Penutup yang mengena:?\s*/gi, '')
+        .replace(/Output JSON murni:.*?({)/gi, '$1')
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/gi, '')
+        .replace(/^\s*[\*\-\+]\s*/gm, '') // Hapus bullet points
+        .trim();
+    
+    // Coba parse JSON
+    try {
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.log("Parse JSON gagal, coba metode lain");
+    }
+    
+    // Jika bukan JSON, ambil judul dan naskah manual
+    const lines = cleanText.split('\n').filter(l => l.trim().length > 0);
+    let judul = "";
+    let naskah = "";
+    
+    // Cari baris yang mungkin judul (diawali emoji atau pendek)
+    for (let line of lines) {
+        if (line.match(/[🕌📖🤲☪️✨🌟⭐]/) || line.includes('!') || line.length < 100) {
+            judul = line.trim();
+            break;
+        }
+    }
+    
+    // Jika tidak ketemu, cari baris pertama sebagai judul
+    if (!judul && lines.length > 0) {
+        judul = lines[0].trim();
+        lines.shift();
+    }
+    
+    // Ambil sisa sebagai naskah
+    if (judul) {
+        naskah = cleanText.replace(judul, '').trim();
+    } else {
+        judul = "🕌 Kisah Islami Penuh Hikmah";
+        naskah = cleanText;
+    }
+    
+    // Bersihkan naskah dari instruksi yang tersisa
+    naskah = naskah
+        .replace(/^[:\s\-_*]+/g, '')
+        .replace(/Pembukaan.*?(?=[A-Za-z])/gi, '')
+        .replace(/Inti.*?(?=[A-Za-z])/gi, '')
+        .replace(/Hikmah.*?(?=[A-Za-z])/gi, '')
+        .replace(/Penutup.*?(?=[A-Za-z])/gi, '')
+        .replace(/^\s*[\*\-\+]\s*/gm, '')
+        .replace(/\n\s*\n\s*\n/g, '\n\n') // Hapus enter berlebih
+        .trim();
+    
+    // Pastikan judul tidak terlalu panjang
+    if (judul.length > 100) {
+        judul = judul.substring(0, 97) + '...';
+    }
+    
+    return { judul, naskah };
+}
+
 const STYLE_LOCK_ISLAMI = "Sinematik epik bergaya Timur Tengah, pencahayaan hangat keemasan, arsitektur masjid kuno, detail kaligrafi Arab, suasana mistis dan sakral, efek cahaya lembut, warna dominan emas dan hijau, depth of field, 8K, ultra realistic, bukan kartun.";
 
 async function generateIslami() {
@@ -42,18 +109,29 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         const userPrompt = `Buat satu kisah islami yang inspiratif dan penuh hikmah. Bisa tentang nabi, sahabat, atau peristiwa bersejarah dalam Islam.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
+        console.log("RAW ISLAMI:", raw);
         
+        // ========== GUNAKAN FUNGSI PARSING ==========
         let parsed;
         try { 
             parsed = JSON.parse(raw); 
         } catch {
-            const match = raw.match(/{[\s\S]*?}/);
-            if(match) parsed = JSON.parse(match[0]); else throw new Error("Gagal parse JSON");
+            parsed = parseNarasiIslami(raw);
+            if (!parsed.judul || !parsed.naskah || parsed.naskah.length < 50) {
+                // Fallback: jika masih gagal, buat manual
+                parsed = {
+                    judul: "🕌 Kisah Islami Penuh Hikmah",
+                    naskah: raw.replace(/[\[\]{}"]/g, '').trim()
+                };
+            }
         }
         
         currentJudul = parsed.judul;
         currentNaskah = parsed.naskah;
-        if(!currentJudul || !currentNaskah || currentNaskah.length < 150) throw new Error("Naskah terlalu pendek");
+        
+        if (!currentNaskah || currentNaskah.length < 100) {
+            throw new Error("Naskah terlalu pendek");
+        }
         
         document.getElementById('judulText').innerText = currentJudul;
         document.getElementById('naskahUtama').innerText = currentNaskah;
@@ -77,6 +155,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
         document.getElementById('loadText').innerText = "✂️ Membagi kisah menjadi scene...";
         
+        // Split naskah menjadi kalimat untuk scene
         const kalimat = currentNaskah.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
         const scenes = kalimat.length >= 3 ? kalimat : [currentNaskah];
         
@@ -101,22 +180,33 @@ IMAGE TO VIDEO:
             
             try {
                 const visualPrompt = await callGroq(scenes[i], systemVisual);
+                console.log(`Scene ${i+1} prompt:`, visualPrompt);
                 
+                // Bersihkan visual prompt dari instruksi
+                let cleanVisual = visualPrompt
+                    .replace(/Output.*?(?=TEXT)/gi, '')
+                    .replace(/Anda pembuat.*?(?=TEXT)/gi, '')
+                    .trim();
+                
+                // Parse prompt menjadi text-to-image dan image-to-video
                 let textToImage = "";
                 let imageToVideo = "";
                 
-                const ttiMatch = visualPrompt.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
+                // Cari bagian TEXT TO IMAGE:
+                const ttiMatch = cleanVisual.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
                 if (ttiMatch && ttiMatch[1]) {
                     textToImage = ttiMatch[1].trim();
                 }
                 
-                const itvMatch = visualPrompt.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
+                // Cari bagian IMAGE TO VIDEO:
+                const itvMatch = cleanVisual.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
                 if (itvMatch && itvMatch[1]) {
                     imageToVideo = itvMatch[1].trim();
                 }
                 
+                // Fallback jika parsing gagal
                 if (!textToImage && !imageToVideo) {
-                    textToImage = visualPrompt;
+                    textToImage = cleanVisual;
                     imageToVideo = "Prompt tidak terdeteksi dengan format yang benar";
                 }
                 
@@ -124,7 +214,7 @@ IMAGE TO VIDEO:
                     textToImage: textToImage,
                     imageToVideo: imageToVideo,
                     originalText: scenes[i],
-                    fullPrompt: visualPrompt
+                    fullPrompt: cleanVisual
                 });
                 
                 sceneHtml += `

@@ -480,7 +480,7 @@ function copyAllTTI() {
     let allTTI = "";
     sceneData.forEach((d, i) => {
         if (d.textToImage && d.textToImage !== "Tidak tersedia untuk mode fakta") {
-            allTTI += `[SCENE ${i+1} - TEXT TO IMAGE]\n${d.textToImage}\n\n`;
+            allTTI += d.textToImage + "\n\n";
         }
     });
     
@@ -503,7 +503,7 @@ function copyAllITV() {
     let allITV = "";
     sceneData.forEach((d, i) => {
         if (d.imageToVideo && d.imageToVideo !== "Tidak tersedia untuk mode fakta") {
-            allITV += `[SCENE ${i+1} - IMAGE TO VIDEO]\n${d.imageToVideo}\n\n`;
+            allITV += d.imageToVideo + "\n\n";
         }
     });
     
@@ -528,8 +528,8 @@ function copyAllPrompts() {
         let allITV = "";
         
         sceneData.forEach((d, i) => {
-            allTTI += `[SCENE ${i+1} - TEXT TO IMAGE]\n${d.textToImage}\n\n`;
-            allITV += `[SCENE ${i+1} - IMAGE TO VIDEO]\n${d.imageToVideo}\n\n`;
+            allTTI += d.textToImage + "\n\n";
+            allITV += d.imageToVideo + "\n\n";
         });
         
         const fullText = `=== ALL TEXT TO IMAGE PROMPTS ===\n\n${allTTI}\n=== ALL IMAGE TO VIDEO PROMPTS ===\n\n${allITV}`;

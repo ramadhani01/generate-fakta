@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN PANEL · KEY GENERATOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --ready: #ef4444;
+            --success-bg: #22c55e;
+            --dark: #1f2937;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+
+        /* Login Modal */
+        .login-modal {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 50px auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .login-modal h2 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-modal p {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .admin-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Info Card - Tempat List Key */
+        .key-list-card {
+            background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+        }
+
+        .key-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .key-list-header h3 {
+            font-size: 18px;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .key-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .key-stat-badge {
+            background: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            border: 1px solid #e5e7eb;
+        }
+
+        .key-stat-badge span {
+            color: #6b7280;
+            margin-right: 5px;
+        }
+
+        /* Grid untuk key */
+        .key-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .key-item {
+            background: white;
+            border-radius: 50px;
+            padding: 8px 15px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .key-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.3);
+        }
+
+        .key-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .key-code {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+            background: #f3f4f6;
+            padding: 6px 15px;
+            border-radius: 30px;
+        }
+
+        .key-status-badge {
+            padding: 4px 15px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 12px;
+            min-width: 80px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .status-ready {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .key-device {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .device-icon {
+            font-size: 14px;
+        }
+
+        .device-name {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .key-actions {
+            display: flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .key-actions button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .key-actions button:hover {
+            transform: scale(1.1);
+        }
+
+        .copy-btn {
+            background: #f3f4f6;
+            color: var(--primary);
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .delete-btn {
+            background: #f3f4f6;
+            color: var(--danger);
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 10px 25px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: #f3f4f6;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .refresh-btn:hover {
+            background: #4f52e0;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+            background: #f9fafc;
+            border-radius: 20px;
+            border: 2px dashed #e5e7eb;
+        }
+
+        .logout-btn {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .notification.error {
+            background: var(--danger);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .clear-history {
+            background: none;
+            border: 1px solid #e5e7eb;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .clear-history:hover {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-modal">
+            <h2>🔒 Admin Login</h2>
+            <p>Masukkan password untuk mengakses panel</p>
+            <input type="password" id="adminPassword" class="login-input" placeholder="Password" autocomplete="off">
+            <button class="login-btn" onclick="login()">MASUK</button>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="admin-panel hidden">
+            <div class="admin-header">
+                <h1>🔧 ADMIN PANEL</h1>
+                <span class="badge">KEY GENERATOR v2.0</span>
+            </div>
+
+            <!-- Tombol Generate -->
+            <button class="generate-btn" onclick="generateAccessKey()" id="generateBtn">
+                <span>🔑</span> GENERATE NEW ACCESS KEY <span>✨</span>
+            </button>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <button class="filter-btn active" onclick="filterKeys('all')" id="filterAll">Semua Key</button>
+                <button class="filter-btn" onclick="filterKeys('ready')" id="filterReady">READY</button>
+                <button class="filter-btn" onclick="filterKeys('success')" id="filterSuccess">SUCCESS</button>
+                <button class="clear-history" onclick="clearAllKeys()">Hapus Semua</button>
+                <button class="refresh-btn" onclick="manualRefresh()">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+
+            <!-- Key List Card -->
+            <div class="key-list-card">
+                <div class="key-list-header">
+                    <h3>
+                        <span>📋</span>
+                        <span>DAFTAR ACCESS KEY</span>
+                    </h3>
+                    <div class="key-stats">
+                        <span class="key-stat-badge"><span>Total:</span> <span id="totalKeys">0</span></span>
+                        <span class="key-stat-badge"><span>READY:</span> <span id="readyKeys">0</span></span>
+                        <span class="key-stat-badge"><span>SUCCESS:</span> <span id="successKeys">0</span></span>
+                    </div>
+                </div>
+
+                <!-- List Key -->
+                <div class="key-grid" id="keyGrid">
+                    <!-- Key items akan muncul di sini -->
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                <span>🚪</span> KELUAR
+            </button>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let accessKeys = [];
+        let registeredDevices = {};
+        let currentFilter = 'all';
+        let refreshInterval;
+        const ADMIN_PASSWORD = "zee666";
+
+        // ==================== DETEKSI NAMA DEVICE ====================
+        function getDeviceModel(userAgent, platform) {
+            let deviceName = "Unknown Device";
+            
+            // Deteksi HP berdasarkan user agent
+            if (userAgent) {
+                // Samsung
+                if (userAgent.includes("SM-") || userAgent.includes("Samsung")) {
+                    const match = userAgent.match(/SM-[A-Z0-9]+/);
+                    deviceName = match ? `Samsung ${match[0]}` : "Samsung Device";
+                }
+                // Oppo
+                else if (userAgent.includes("OPPO") || userAgent.includes("CPH")) {
+                    const match = userAgent.match(/CPH[0-9]+/);
+                    deviceName = match ? `Oppo ${match[0]}` : "Oppo Device";
+                    if (deviceName.includes("CPH2213")) deviceName = "Oppo A17";
+                    else if (deviceName.includes("CPH2211")) deviceName = "Oppo A16";
+                }
+                // Xiaomi
+                else if (userAgent.includes("Xiaomi") || userAgent.includes("Redmi") || userAgent.includes("Mi ")) {
+                    if (userAgent.includes("Redmi Note 12")) deviceName = "Xiaomi Redmi Note 12";
+                    else if (userAgent.includes("Redmi Note 11")) deviceName = "Xiaomi Redmi Note 11";
+                    else if (userAgent.includes("Redmi 9")) deviceName = "Xiaomi Redmi 9";
+                    else deviceName = "Xiaomi Device";
+                }
+                // Vivo
+                else if (userAgent.includes("Vivo") || userAgent.includes("vivo")) {
+                    deviceName = "Vivo Device";
+                }
+                // Realme
+                else if (userAgent.includes("Realme") || userAgent.includes("RMX")) {
+                    const match = userAgent.match(/RMX[0-9]+/);
+                    deviceName = match ? `Realme ${match[0]}` : "Realme Device";
+                }
+                // iPhone
+                else if (userAgent.includes("iPhone")) {
+                    if (userAgent.includes("iPhone 15")) deviceName = "iPhone 15";
+                    else if (userAgent.includes("iPhone 14")) deviceName = "iPhone 14";
+                    else if (userAgent.includes("iPhone 13")) deviceName = "iPhone 13";
+                    else if (userAgent.includes("iPhone 12")) deviceName = "iPhone 12";
+                    else deviceName = "iPhone";
+                }
+                // iPad
+                else if (userAgent.includes("iPad")) {
+                    deviceName = "iPad";
+                }
+                // Android generic
+                else if (userAgent.includes("Android")) {
+                    deviceName = "Android Device";
+                }
+                // Windows
+                else if (userAgent.includes("Windows")) {
+                    deviceName = "Windows PC";
+                }
+                // Mac
+                else if (userAgent.includes("Mac OS")) {
+                    deviceName = "MacBook";
+                }
+                // Linux
+                else if (userAgent.includes("Linux")) {
+                    deviceName = "Linux PC";
+                }
+            }
+            
+            return deviceName;
+        }
+
+        // ==================== LOAD REGISTERED DEVICES ====================
+        function loadRegisteredDevices() {
+            const saved = localStorage.getItem('registered_devices');
+            if (saved) {
+                registeredDevices = JSON.parse(saved);
+                console.log("📱 Registered devices loaded:", registeredDevices);
+            } else {
+                registeredDevices = {};
+            }
+        }
+
+        // ==================== GENERATE KEY ====================
+        function generateAccessKey() {
+            // Bagian 1: zx + 2 angka random
+            const num1 = Math.floor(Math.random() * 90 + 10); // 10-99
+            const part1 = `zx${num1}`;
+            
+            // Bagian 2: 4 angka random
+            const part2 = Math.floor(Math.random() * 9000 + 1000); // 1000-9999
+            
+            // Bagian 3: 5 karakter (huruf + angka)
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let part3 = '';
+            for (let i = 0; i < 5; i++) {
+                part3 += chars[Math.floor(Math.random() * chars.length)];
+            }
+            
+            const newKey = `${part1}-${part2}-${part3}`;
+            
+            // Tambah key baru di AWAL array (agar muncul di atas)
+            accessKeys.unshift({ 
+                key: newKey, 
+                status: 'ready', // ready = merah (belum dipakai)
+                createdAt: new Date().toLocaleString('id-ID'),
+                deviceId: null,
+                deviceInfo: null
+            });
+            
+            saveAccessKeys();
+            updateKeyGrid();
+            showNotif(`✅ Key baru: ${newKey}`);
+        }
+
+        // ==================== DELETE KEY ====================
+        function deleteKey(key) {
+            if (confirm("Hapus key ini secara permanen?")) {
+                
+                // Cari key yang akan dihapus
+                const keyToDelete = accessKeys.find(k => k.key === key);
+                
+                // Jika key sudah success dan punya device, hapus juga dari registered devices
+                if (keyToDelete && keyToDelete.status === 'success' && keyToDelete.deviceId) {
+                    delete registeredDevices[keyToDelete.deviceId];
+                    localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
+                }
+                
+                // Hapus key dari array
+                accessKeys = accessKeys.filter(k => k.key !== key);
+                saveAccessKeys();
+                updateKeyGrid();
+                showNotif("Key dihapus", "error");
+            }
+        }
+
+        // ==================== CLEAR ALL KEYS ====================
+        function clearAllKeys() {
+            if (confirm("Hapus SEMUA key secara permanen?")) {
+                accessKeys = [];
+                registeredDevices = {};
+                localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
+                saveAccessKeys();
+                updateKeyGrid();
+                showNotif("Semua key dihapus", "error");
+            }
+        }
+
+        // ==================== COPY KEY ====================
+        function copyKey(key) {
+            copyToClipboard(key, "Key copied!");
+        }
+
+        // ==================== FILTER KEYS ====================
+        function filterKeys(filter) {
+            currentFilter = filter;
+            
+            // Update button active state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            let filterId = 'filterAll';
+            if (filter === 'ready') filterId = 'filterReady';
+            else if (filter === 'success') filterId = 'filterSuccess';
+            
+            document.getElementById(filterId).classList.add('active');
+            
+            updateKeyGrid();
+        }
+
+        // ==================== GET FILTERED KEYS ====================
+        function getFilteredKeys() {
+            if (currentFilter === 'all') {
+                return accessKeys;
+            } else {
+                return accessKeys.filter(k => k.status === currentFilter);
+            }
+        }
+
+        // ==================== UPDATE STATS ====================
+        function updateStats() {
+            const total = accessKeys.length;
+            const ready = accessKeys.filter(k => k.status === 'ready').length;
+            const success = accessKeys.filter(k => k.status === 'success').length;
+
+            document.getElementById('totalKeys').innerText = total;
+            document.getElementById('readyKeys').innerText = ready;
+            document.getElementById('successKeys').innerText = success;
+        }
+
+        // ==================== UPDATE KEY GRID ====================
+        function updateKeyGrid() {
+            const keyGrid = document.getElementById('keyGrid');
+            const filteredKeys = getFilteredKeys();
+            
+            console.log("🔄 Updating grid with filter:", currentFilter);
+            console.log("📋 Filtered keys:", filteredKeys);
+            
+            if (filteredKeys.length === 0) {
+                keyGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🔑</div>
+                        <p>Belum ada key</p>
+                        <p style="font-size: 14px;">Klik GENERATE untuk membuat key baru</p>
+                    </div>
+                `;
+                updateStats();
+                return;
+            }
+            
+            let html = '';
+            
+            filteredKeys.forEach((item) => {
+                let statusClass = '';
+                let statusText = '';
+                
+                if (item.status === 'ready') {
+                    statusClass = 'status-ready';
+                    statusText = 'READY';
+                } else if (item.status === 'success') {
+                    statusClass = 'status-success';
+                    statusText = 'SUCCESS';
+                }
+                
+                // Cari device info jika key success
+                let deviceHtml = '';
+                if (item.status === 'success' && item.deviceId && registeredDevices[item.deviceId]) {
+                    const device = registeredDevices[item.deviceId];
+                    const deviceName = getDeviceModel(device.userAgent, device.platform);
+                    
+                    deviceHtml = `
+                        <div class="key-device">
+                            <span class="device-icon">📱</span>
+                            <span class="device-name">${deviceName}</span>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="key-item">
+                        <div class="key-left">
+                            <span class="key-code">${item.key}</span>
+                            <span class="key-status-badge ${statusClass}">${statusText}</span>
+                            ${deviceHtml}
+                        </div>
+                        <div class="key-actions">
+                            <button class="copy-btn" onclick="copyKey('${item.key}')" title="Copy Key">📋</button>
+                            <button class="delete-btn" onclick="deleteKey('${item.key}')" title="Hapus Key">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            keyGrid.innerHTML = html;
+            updateStats();
+        }
+
+        // ==================== SYNC DENGAN DEVICE (PERBAIKAN) ====================
+        function syncWithDevices() {
+            // Load registered devices
+            loadRegisteredDevices();
+            
+            // Update access keys dengan info device
+            let adaPerubahan = false;
+            
+            accessKeys.forEach(key => {
+                if (key.status === 'success' && key.deviceId) {
+                    // Cek apakah device masih terdaftar
+                    const device = registeredDevices[key.deviceId];
+                    if (!device) {
+                        // Jika device tidak ditemukan, tapi status success, kita biarkan saja
+                        // Jangan ubah ke ready karena key sudah pernah dipakai
+                        console.log("⚠️ Device tidak ditemukan untuk key success:", key.key);
+                    }
+                }
+            });
+            
+            if (adaPerubahan) {
+                saveAccessKeys();
+            }
+            updateKeyGrid();
+        }
+
+        // ==================== SAVE/LOAD KEYS ====================
+        function saveAccessKeys() {
+            localStorage.setItem('access_keys', JSON.stringify(accessKeys));
+            console.log("💾 Access keys saved:", accessKeys);
+        }
+
+        function loadAccessKeys() {
+            const saved = localStorage.getItem('access_keys');
+            if (saved) {
+                accessKeys = JSON.parse(saved);
+                // Hanya tampilkan key dengan status ready atau success
+                accessKeys = accessKeys.filter(k => k.status === 'ready' || k.status === 'success');
+                console.log("📋 Access keys loaded:", accessKeys);
+                console.log("🔑 Keys with status:", accessKeys.map(k => ({key: k.key, status: k.status})));
+            } else {
+                accessKeys = []; // KOSONG
+                console.log("📋 No access keys found");
+            }
+            
+            // Sync dengan device yang terdaftar
+            syncWithDevices();
+        }
+
+        // ==================== AUTO REFRESH ====================
+        function startAutoRefresh() {
+            // Refresh setiap 3 detik
+            refreshInterval = setInterval(() => {
+                if (!document.getElementById('adminPanel').classList.contains('hidden')) {
+                    console.log("🔄 Auto-refreshing keys...");
+                    loadAccessKeys();
+                    loadRegisteredDevices();
+                    updateKeyGrid();
+                }
+            }, 3000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                console.log("⏹️ Auto-refresh stopped");
+            }
+        }
+
+        // ==================== MANUAL REFRESH ====================
+        function manualRefresh() {
+            loadAccessKeys();
+            loadRegisteredDevices();
+            showNotif("✅ Data refreshed!");
+        }
+
+        // ==================== RESET DATA (UNTUK DEBUG) ====================
+        function resetData() {
+            if (confirm("RESET SEMUA DATA? Key dan device akan dihapus!")) {
+                localStorage.removeItem('access_keys');
+                localStorage.removeItem('registered_devices');
+                accessKeys = [];
+                registeredDevices = {};
+                updateKeyGrid();
+                showNotif("⚠️ Data direset!", "error");
+            }
+        }
+
+        // ==================== LOGIN SYSTEM ====================
+        function login() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadAccessKeys();
+                loadRegisteredDevices();
+                startAutoRefresh();
+                showNotif("✅ Login berhasil!");
+                
+                // Tampilkan petunjuk reset di console
+                console.log("ℹ️ Ketik resetData() untuk menghapus semua data");
+            } else {
+                alert("❌ Password salah!");
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+            currentFilter = 'all';
+            stopAutoRefresh();
+        }
+
+        // ==================== NOTIFICATION ====================
+        function showNotif(msg, type = 'success') {
+            const n = document.getElementById('notification');
+            n.innerText = msg;
+            n.className = `notification ${type}`;
+            n.style.display = 'block';
+            setTimeout(() => n.style.display = 'none', 2000);
+        }
+
+        // ==================== COPY TO CLIPBOARD ====================
+        function copyToClipboard(text, msg) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => showNotif(msg));
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showNotif(msg);
+            }
+        }
+
+        // ==================== EXPOSE FUNCTIONS ====================
+        window.login = login;
+        window.logout = logout;
+        window.generateAccessKey = generateAccessKey;
+        window.deleteKey = deleteKey;
+        window.copyKey = copyKey;
+        window.filterKeys = filterKeys;
+        window.clearAllKeys = clearAllKeys;
+        window.manualRefresh = manualRefresh;
+        window.resetData = resetData; // TAMBAHKAN UNTUK DEBUG
+    </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+/* ========== CSS KHUSUS MANUSIA TENGKORAK ========== */
+.scene-number {
+    color: #a855f7;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 800;
+}
+
+.scene-number::before {
+    content: "💀 ";
+}
+
+.scene-original {
+    background: #f3f4f6;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #4b5563;
+    border-left: 3px solid #a855f7;
+}
+
+.prompt-section {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.prompt-label {
+    font-size: 11px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.prompt-content {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #1f2937;
+    background: white;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 10px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    max-height: 80px;
+    overflow: hidden;
+    position: relative;
+}
+
+.prompt-content.expanded {
+    max-height: none;
+    overflow: visible;
+}
+
+.scene-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.scene-actions button {
+    flex: 1;
+    min-width: 70px;
+    background: white;
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.scene-actions button:hover {
+    background: #a855f7;
+    border-color: #a855f7;
+    color: white;
+}
+
+.copy-tti:hover {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+.copy-itv:hover {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.copy-full:hover {
+    background: #8b5cf6 !important;
+    border-color: #8b5cf6 !important;
+}
+
+.copy-narasi:hover {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+
+.view-full:hover {
+    background: #6b7280 !important;
+    border-color: #6b7280 !important;
+}
+
+.btn-gen {
+    background: linear-gradient(135deg, #a855f7, #d946ef);
+}
+
+.loading .spinner {
+    border-top-color: #a855f7;
+}
+
+.copy-prompts-btn {
+    background: #a855f7;
+}
+.copy-prompts-btn:hover {
+    background: #9333ea;
+}
+
+.device-id {
+    color: #a855f7;
+}
+
+.scene-item {
+    border-left: 4px solid #a855f7;
+    transition: all 0.3s;
+}
+
+.scene-item:hover {
+    border-left-width: 6px;
+    box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.2);
+}
+
+/* Modal untuk lihat full prompt */
+.prompt-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 20000;
+    padding: 20px;
+}
+
+.prompt-modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.prompt-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f3f4f6;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.prompt-modal-close:hover {
+    background: #e5e7eb;
+}
+
+.prompt-modal-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 15px;
+    color: #a855f7;
+    padding-right: 30px;
+}
+
+.prompt-modal-text {
+    background: #f3f4f6;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+}
+
+.prompt-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.prompt-modal-btn.copy {
+    background: #a855f7;
+    color: white;
+}
+
+.prompt-modal-btn.close {
+    background: #f3f4f6;
+    color: #4b5563;
+}

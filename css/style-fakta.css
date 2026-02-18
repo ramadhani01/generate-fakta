@@ -1,0 +1,38 @@
+/* ========== CSS KHUSUS FAKTA UNIK ========== */
+.scene-number {
+    color: #22c55e;
+}
+
+.scene-actions button:hover {
+    background: #22c55e;
+}
+
+.btn-gen {
+    background: linear-gradient(135deg, #22c55e, #10b981);
+}
+
+.loading .spinner {
+    border-top-color: #22c55e;
+}
+
+.copy-prompts-btn {
+    background: #22c55e;
+}
+.copy-prompts-btn:hover {
+    background: #16a34a;
+}
+
+.device-id {
+    color: #22c55e;
+}
+
+/* Toggle colors for fakta mode */
+input:checked + .slider {
+    background-color: #22c55e;
+}
+.toggle-status {
+    background: #22c55e;
+}
+.toggle-status.off {
+    background: var(--danger);
+}

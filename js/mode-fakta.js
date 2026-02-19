@@ -1,8 +1,5 @@
 // ========== MODE FAKTA UNIK ==========
 
-// Style lock untuk fakta unik (lebih umum)
-const STYLE_LOCK_FAKTA = "Sinematik ultra realistis, pencahayaan dramatis, detail tinggi, sudut kamera sinematik, depth of field, warna vibrant, 8K, fokus tajam, bukan animasi.";
-
 async function generateFaktaUnik() {
     updateStats('total');
     
@@ -134,14 +131,11 @@ INSTRUKSI PENTING:
         
         document.getElementById('sceneGrid').innerHTML = sceneHtml;
         document.getElementById('copyPromptsBtn').style.display = 'block';
-        // Tampilkan tombol TTI/ITV untuk fakta mode juga
-        document.getElementById('copyAllTTIBtn').style.display = 'block';
-        document.getElementById('copyAllITVBtn').style.display = 'block';
         output.style.display = 'block';
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene fakta unik siap!`);
+        showNotif(`✅ ${jumlahScene} scene berhasil digenerate!`);
 
     } catch (e) {
         updateStats('fail');
@@ -151,7 +145,6 @@ INSTRUKSI PENTING:
     }
 }
 
-// ==================== PARSING JSON ROBUST ====================
 function parseJSONRobust(rawText) {
     try {
         return JSON.parse(rawText);
@@ -175,7 +168,6 @@ function parseJSONRobust(rawText) {
         } catch (e) {}
     }
     
-    // Fallback manual
     const cleanText = rawText
         .replace(/```[a-z]*/gi, '')
         .replace(/`/g, '')
@@ -206,7 +198,6 @@ function parseJSONRobust(rawText) {
     return { judul, naskah };
 }
 
-// ==================== HITUNG JUMLAH SCENE ====================
 function hitungJumlahScene(naskah) {
     const teksTanpaPembuka = naskah.replace(/^tahukah\s+kamu\??\s*/i, "");
     const kalimat = teksTanpaPembuka
@@ -216,7 +207,6 @@ function hitungJumlahScene(naskah) {
     return Math.max(kalimat.length, 1);
 }
 
-// ==================== BAGI NASKAH MENJADI SCENE ====================
 function bagiNaskahMenjadiScene(naskah, jumlahScene) {
     const teksTanpaPembuka = naskah.replace(/^tahukah\s+kamu\??\s*/i, "");
     const kalimat = teksTanpaPembuka

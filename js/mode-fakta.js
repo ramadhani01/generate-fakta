@@ -81,80 +81,44 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         const totalDurasi = jumlahScene * DURASI_PER_SCENE;
         document.getElementById('sceneInfo').innerHTML = `🎬 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik video`;
         
-        document.getElementById('loadText').innerText = "🎨 Generate prompt visual (TTI & ITV)...";
+        document.getElementById('loadText').innerText = "🎨 Generate prompt visual...";
         
         let sceneHtml = '';
         
         for(let i = 0; i < scenes.length; i++) {
-            const systemVisual = `Anda pembuat prompt video sinematik. Buat prompt Text-to-Image dan Image-to-Video terpisah untuk adegan berikut: "${scenes[i]}". WAJIB gunakan style lock berikut di awal setiap prompt: ${STYLE_LOCK_FAKTA}. Adegan harus merefleksikan narasi secara visual, sesuai dengan konteks fakta yang diceritakan.
+            const systemPromptVisual = `Anda adalah ahli prompt video AI. Buat SATU PROMPT VIDEO SINEMATIK berdasarkan kalimat berikut.
 
-Output HARUS dengan format EXACT berikut (tanpa tambahan teks lain):
+KALIMAT: "${scenes[i]}"
 
-TEXT TO IMAGE:
-[prompt text to image disini]
-
-IMAGE TO VIDEO:
-[prompt image to video disini]`;
+INSTRUKSI PENTING:
+- HASIL AKHIR HARUS HANYA PROMPT VIDEO, TANPA KATA "PROMPT:" ATAU PENJELASAN LAIN
+- Prompt harus visual murni, hanya deskripsi gambar/video
+- Gunakan istilah sinematik: close-up, wide shot, slow motion, dll
+- Sertakan pencahayaan, sudut kamera, suasana, warna dominan
+- Langsung berikan deskripsi visualnya saja`;
             
             try {
-                const visualPrompt = await callGroq(scenes[i], systemVisual);
+                const visualPrompt = await callGroq(scenes[i], systemPromptVisual);
                 
-                // Bersihkan visual prompt
-                let cleanVisual = visualPrompt
-                    .replace(/Output.*?(?=TEXT)/gi, '')
-                    .replace(/Anda pembuat.*?(?=TEXT)/gi, '')
-                    .trim();
-                
-                // Parse prompt menjadi text-to-image dan image-to-video
-                let textToImage = "";
-                let imageToVideo = "";
-                
-                const ttiMatch = cleanVisual.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
-                if (ttiMatch && ttiMatch[1]) {
-                    textToImage = ttiMatch[1].trim();
-                }
-                
-                const itvMatch = cleanVisual.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
-                if (itvMatch && itvMatch[1]) {
-                    imageToVideo = itvMatch[1].trim();
-                }
-                
-                if (!textToImage) textToImage = "Prompt tidak tersedia";
-                if (!imageToVideo) imageToVideo = "Prompt tidak tersedia";
+                let cleanPrompt = visualPrompt;
+                cleanPrompt = cleanPrompt.replace(/^(Prompt:|prompt:)/i, '').trim();
+                cleanPrompt = cleanPrompt.replace(/^["']|["']$/g, '');
                 
                 sceneData.push({ 
-                    textToImage: textToImage,
-                    imageToVideo: imageToVideo,
+                    prompt: cleanPrompt, 
                     originalText: scenes[i],
-                    fullPrompt: cleanVisual
+                    textToImage: cleanPrompt,
+                    imageToVideo: "Tidak tersedia untuk mode fakta",
+                    fullPrompt: cleanPrompt
                 });
                 
                 sceneHtml += `
-                    <div class="scene-item fakta-mode" data-scene="${i}">
+                    <div class="scene-item">
                         <div class="scene-number">🎬 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
-                        <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
-                        
-                        <div class="prompt-section">
-                            <div class="prompt-label">🖼️ TEXT TO IMAGE</div>
-                            <div class="prompt-content" id="tti-${i}">${textToImage.substring(0, 100)}${textToImage.length > 100 ? '...' : ''}</div>
-                            <div class="scene-actions">
-                                <button onclick="copyTextToImage(${i})" class="copy-tti">📋 Copy TTI</button>
-                                <button onclick="showFullPrompt(${i}, 'tti')" class="view-full">👁️ Lihat</button>
-                            </div>
-                        </div>
-                        
-                        <div class="prompt-section" style="margin-top: 12px;">
-                            <div class="prompt-label">🎬 IMAGE TO VIDEO</div>
-                            <div class="prompt-content" id="itv-${i}">${imageToVideo.substring(0, 100)}${imageToVideo.length > 100 ? '...' : ''}</div>
-                            <div class="scene-actions">
-                                <button onclick="copyImageToVideo(${i})" class="copy-itv">📋 Copy ITV</button>
-                                <button onclick="showFullPrompt(${i}, 'itv')" class="view-full">👁️ Lihat</button>
-                            </div>
-                        </div>
-                        
-                        <div class="scene-actions" style="margin-top: 12px;">
-                            <button onclick="copyFullPrompt(${i})" class="copy-full">📋 Copy Full</button>
-                            <button onclick="copyNarasi(${i})" class="copy-narasi">📝 Narasi</button>
+                        <div class="scene-prompt">${cleanPrompt.substring(0, 120)}${cleanPrompt.length > 120 ? '...' : ''}</div>
+                        <div class="scene-actions">
+                            <button onclick="copyPrompt(${i})">📋 Copy Prompt</button>
+                            <button onclick="copyNarasi(${i})">📝 Copy Narasi</button>
                         </div>
                     </div>
                 `;

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>ADMIN PANEL · KEY GENERATOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --ready: #ef4444;
+            --success-bg: #22c55e;
+            --dark: #1f2937;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body { 
+            background: var(--bg-gradient);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            padding: 12px;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .container { 
+            max-width: 100%; 
+            width: 100%;
+            margin: 0 auto; 
+        }
+
+        /* Login Modal */
+        .login-modal {
+            background: white;
+            border-radius: 24px;
+            padding: 24px 20px;
+            width: 100%;
+            max-width: 360px;
+            margin: 20px auto;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-modal h2 {
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .login-modal p {
+            color: #6b7280;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+            background: #f9fafc;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 20px 16px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f3f4f6;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .admin-header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Info Card - Tempat List Key */
+        .key-list-card {
+            background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+            border-radius: 20px;
+            padding: 18px 14px;
+            margin-bottom: 20px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.2);
+        }
+
+        .key-list-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .key-list-header h3 {
+            font-size: 16px;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .key-stats {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .key-stat-badge {
+            background: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .key-stat-badge span {
+            color: #6b7280;
+            margin-right: 4px;
+        }
+
+        /* Grid untuk key */
+        .key-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 4px 2px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .key-item {
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            gap: 10px;
+        }
+
+        .key-item:active {
+            transform: scale(0.99);
+            background: #f9fafb;
+        }
+
+        .key-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .key-top-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .key-code {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            background: #f3f4f6;
+            padding: 6px 12px;
+            border-radius: 30px;
+            word-break: break-all;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .key-status-badge {
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 11px;
+            min-width: 70px;
+            text-align: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status-ready {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .key-device {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 4px 12px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+
+        .device-icon {
+            font-size: 12px;
+        }
+
+        .device-name {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        .key-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .key-actions button {
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .key-actions button:active {
+            transform: scale(0.92);
+        }
+
+        .copy-btn {
+            color: var(--primary);
+        }
+
+        .copy-btn:active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .delete-btn {
+            color: var(--danger);
+        }
+
+        .delete-btn:active {
+            background: var(--danger);
+            color: white;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .generate-btn:active {
+            transform: scale(0.98);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 13px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-btn:active:not(.active) {
+            background: #f3f4f6;
+            transform: scale(0.96);
+        }
+
+        .clear-history {
+            background: none;
+            border: 1px solid #e5e7eb;
+            padding: 8px 14px;
+            border-radius: 30px;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+        .clear-history:active {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+            transform: scale(0.96);
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.96);
+            background: #4f52e0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 16px;
+            color: #9ca3af;
+            background: #f9fafc;
+            border-radius: 20px;
+            border: 2px dashed #e5e7eb;
+        }
+
+        .empty-state div:first-child {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .logout-btn {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .logout-btn:active {
+            background: #e5e7eb;
+            transform: scale(0.98);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+            text-align: center;
+            margin: 0 auto;
+            max-width: 360px;
+        }
+
+        .notification.error {
+            background: var(--danger);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar styling untuk Android */
+        .key-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .key-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .key-grid::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-modal">
+            <h2>🔒 Admin Login</h2>
+            <p>Masukkan password untuk mengakses panel</p>
+            <input type="password" id="adminPassword" class="login-input" placeholder="Password" autocomplete="off">
+            <button class="login-btn" onclick="login()">MASUK</button>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" class="admin-panel hidden">
+            <div class="admin-header">
+                <h1>🔧 ADMIN PANEL</h1>
+                <span class="badge">KEY GENERATOR v2.0</span>
+            </div>
+
+            <!-- Tombol Generate -->
+            <button class="generate-btn" onclick="generateAccessKey()" id="generateBtn">
+                <span>🔑</span> GENERATE NEW KEY <span>✨</span>
+            </button>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <button class="filter-btn active" onclick="filterKeys('all')" id="filterAll">Semua</button>
+                <button class="filter-btn" onclick="filterKeys('ready')" id="filterReady">READY</button>
+                <button class="filter-btn" onclick="filterKeys('success')" id="filterSuccess">SUCCESS</button>
+                <button class="clear-history" onclick="clearAllKeys()">Hapus</button>
+                <button class="refresh-btn" onclick="manualRefresh()">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+
+            <!-- Key List Card -->
+            <div class="key-list-card">
+                <div class="key-list-header">
+                    <h3>
+                        <span>📋</span>
+                        <span>DAFTAR ACCESS KEY</span>
+                    </h3>
+                    <div class="key-stats">
+                        <span class="key-stat-badge"><span>Total:</span> <span id="totalKeys">0</span></span>
+                        <span class="key-stat-badge"><span>Ready:</span> <span id="readyKeys">0</span></span>
+                        <span class="key-stat-badge"><span>Success:</span> <span id="successKeys">0</span></span>
+                    </div>
+                </div>
+
+                <!-- List Key -->
+                <div class="key-grid" id="keyGrid">
+                    <!-- Key items akan muncul di sini -->
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                <span>🚪</span> KELUAR
+            </button>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let accessKeys = [];
+        let registeredDevices = {};
+        let currentFilter = 'all';
+        let refreshInterval;
+        const ADMIN_PASSWORD = "zee666";
+
+        // ==================== DETEKSI NAMA DEVICE ====================
+        function getDeviceModel(userAgent, platform) {
+            let deviceName = "Unknown Device";
+            
+            if (userAgent) {
+                if (userAgent.includes("SM-") || userAgent.includes("Samsung")) {
+                    const match = userAgent.match(/SM-[A-Z0-9]+/);
+                    deviceName = match ? `Samsung ${match[0]}` : "Samsung Device";
+                }
+                else if (userAgent.includes("OPPO") || userAgent.includes("CPH")) {
+                    const match = userAgent.match(/CPH[0-9]+/);
+                    deviceName = match ? `Oppo ${match[0]}` : "Oppo Device";
+                    if (deviceName.includes("CPH2213")) deviceName = "Oppo A17";
+                    else if (deviceName.includes("CPH2211")) deviceName = "Oppo A16";
+                }
+                else if (userAgent.includes("Xiaomi") || userAgent.includes("Redmi") || userAgent.includes("Mi ")) {
+                    if (userAgent.includes("Redmi Note 12")) deviceName = "Xiaomi Redmi Note 12";
+                    else if (userAgent.includes("Redmi Note 11")) deviceName = "Xiaomi Redmi Note 11";
+                    else if (userAgent.includes("Redmi 9")) deviceName = "Xiaomi Redmi 9";
+                    else deviceName = "Xiaomi Device";
+                }
+                else if (userAgent.includes("Vivo") || userAgent.includes("vivo")) {
+                    deviceName = "Vivo Device";
+                }
+                else if (userAgent.includes("Realme") || userAgent.includes("RMX")) {
+                    const match = userAgent.match(/RMX[0-9]+/);
+                    deviceName = match ? `Realme ${match[0]}` : "Realme Device";
+                }
+                else if (userAgent.includes("iPhone")) {
+                    if (userAgent.includes("iPhone 15")) deviceName = "iPhone 15";
+                    else if (userAgent.includes("iPhone 14")) deviceName = "iPhone 14";
+                    else if (userAgent.includes("iPhone 13")) deviceName = "iPhone 13";
+                    else if (userAgent.includes("iPhone 12")) deviceName = "iPhone 12";
+                    else deviceName = "iPhone";
+                }
+                else if (userAgent.includes("iPad")) {
+                    deviceName = "iPad";
+                }
+                else if (userAgent.includes("Android")) {
+                    deviceName = "Android Device";
+                }
+                else if (userAgent.includes("Windows")) {
+                    deviceName = "Windows PC";
+                }
+                else if (userAgent.includes("Mac OS")) {
+                    deviceName = "MacBook";
+                }
+                else if (userAgent.includes("Linux")) {
+                    deviceName = "Linux PC";
+                }
+            }
+            
+            return deviceName;
+        }
+
+        // ==================== LOAD REGISTERED DEVICES ====================
+        function loadRegisteredDevices() {
+            const saved = localStorage.getItem('registered_devices');
+            if (saved) {
+                registeredDevices = JSON.parse(saved);
+                console.log("📱 Registered devices loaded:", registeredDevices);
+            } else {
+                registeredDevices = {};
+            }
+        }
+
+        // ==================== GENERATE KEY ====================
+        function generateAccessKey() {
+            const num1 = Math.floor(Math.random() * 90 + 10);
+            const part1 = `zx${num1}`;
+            const part2 = Math.floor(Math.random() * 9000 + 1000);
+            
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let part3 = '';
+            for (let i = 0; i < 5; i++) {
+                part3 += chars[Math.floor(Math.random() * chars.length)];
+            }
+            
+            const newKey = `${part1}-${part2}-${part3}`;
+            
+            accessKeys.unshift({ 
+                key: newKey, 
+                status: 'ready',
+                createdAt: new Date().toLocaleString('id-ID'),
+                deviceId: null,
+                deviceInfo: null
+            });
+            
+            saveAccessKeys();
+            updateKeyGrid();
+            showNotif(`✅ Key baru: ${newKey}`);
+        }
+
+        // ==================== DELETE KEY ====================
+        function deleteKey(key) {
+            if (confirm("Hapus key ini?")) {
+                const keyToDelete = accessKeys.find(k => k.key === key);
+                
+                if (keyToDelete && keyToDelete.status === 'success' && keyToDelete.deviceId) {
+                    delete registeredDevices[keyToDelete.deviceId];
+                    localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
+                }
+                
+                accessKeys = accessKeys.filter(k => k.key !== key);
+                saveAccessKeys();
+                updateKeyGrid();
+                showNotif("Key dihapus", "error");
+            }
+        }
+
+        // ==================== CLEAR ALL KEYS ====================
+        function clearAllKeys() {
+            if (confirm("Hapus SEMUA key?")) {
+                accessKeys = [];
+                registeredDevices = {};
+                localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
+                saveAccessKeys();
+                updateKeyGrid();
+                showNotif("Semua key dihapus", "error");
+            }
+        }
+
+        // ==================== COPY KEY ====================
+        function copyKey(key) {
+            copyToClipboard(key, "Key copied!");
+        }
+
+        // ==================== FILTER KEYS ====================
+        function filterKeys(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            let filterId = 'filterAll';
+            if (filter === 'ready') filterId = 'filterReady';
+            else if (filter === 'success') filterId = 'filterSuccess';
+            
+            document.getElementById(filterId).classList.add('active');
+            
+            updateKeyGrid();
+        }
+
+        // ==================== GET FILTERED KEYS ====================
+        function getFilteredKeys() {
+            if (currentFilter === 'all') {
+                return accessKeys;
+            } else {
+                return accessKeys.filter(k => k.status === currentFilter);
+            }
+        }
+
+        // ==================== UPDATE STATS ====================
+        function updateStats() {
+            const total = accessKeys.length;
+            const ready = accessKeys.filter(k => k.status === 'ready').length;
+            const success = accessKeys.filter(k => k.status === 'success').length;
+
+            document.getElementById('totalKeys').innerText = total;
+            document.getElementById('readyKeys').innerText = ready;
+            document.getElementById('successKeys').innerText = success;
+        }
+
+        // ==================== UPDATE KEY GRID ====================
+        function updateKeyGrid() {
+            const keyGrid = document.getElementById('keyGrid');
+            const filteredKeys = getFilteredKeys();
+            
+            if (filteredKeys.length === 0) {
+                keyGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div>🔑</div>
+                        <p>Belum ada key</p>
+                        <p style="font-size: 13px;">Klik GENERATE untuk membuat key baru</p>
+                    </div>
+                `;
+                updateStats();
+                return;
+            }
+            
+            let html = '';
+            
+            filteredKeys.forEach((item) => {
+                let statusClass = '';
+                let statusText = '';
+                
+                if (item.status === 'ready') {
+                    statusClass = 'status-ready';
+                    statusText = 'READY';
+                } else if (item.status === 'success') {
+                    statusClass = 'status-success';
+                    statusText = 'SUCCESS';
+                }
+                
+                let deviceHtml = '';
+                if (item.status === 'success' && item.deviceId && registeredDevices[item.deviceId]) {
+                    const device = registeredDevices[item.deviceId];
+                    const deviceName = getDeviceModel(device.userAgent, device.platform);
+                    
+                    deviceHtml = `
+                        <div class="key-device">
+                            <span class="device-icon">📱</span>
+                            <span class="device-name">${deviceName}</span>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="key-item">
+                        <div class="key-left">
+                            <div class="key-top-row">
+                                <span class="key-code">${item.key}</span>
+                                <span class="key-status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            ${deviceHtml}
+                        </div>
+                        <div class="key-actions">
+                            <button class="copy-btn" onclick="copyKey('${item.key}')" title="Copy Key">📋</button>
+                            <button class="delete-btn" onclick="deleteKey('${item.key}')" title="Hapus Key">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            keyGrid.innerHTML = html;
+            updateStats();
+        }
+
+        // ==================== SYNC DENGAN DEVICE ====================
+        function syncWithDevices() {
+            loadRegisteredDevices();
+            let adaPerubahan = false;
+            
+            accessKeys.forEach(key => {
+                if (key.status === 'success' && key.deviceId) {
+                    const device = registeredDevices[key.deviceId];
+                    if (!device) {
+                        console.log("⚠️ Device tidak ditemukan untuk key success:", key.key);
+                    }
+                }
+            });
+            
+            if (adaPerubahan) {
+                saveAccessKeys();
+            }
+            updateKeyGrid();
+        }
+
+        // ==================== SAVE/LOAD KEYS ====================
+        function saveAccessKeys() {
+            localStorage.setItem('access_keys', JSON.stringify(accessKeys));
+            console.log("💾 Access keys saved:", accessKeys);
+        }
+
+        function loadAccessKeys() {
+            const saved = localStorage.getItem('access_keys');
+            if (saved) {
+                accessKeys = JSON.parse(saved);
+                accessKeys = accessKeys.filter(k => k.status === 'ready' || k.status === 'success');
+                console.log("📋 Access keys loaded:", accessKeys);
+            } else {
+                accessKeys = [];
+            }
+            
+            syncWithDevices();
+        }
+
+        // ==================== AUTO REFRESH ====================
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                if (!document.getElementById('adminPanel').classList.contains('hidden')) {
+                    console.log("🔄 Auto-refreshing keys...");
+                    loadAccessKeys();
+                    loadRegisteredDevices();
+                    updateKeyGrid();
+                }
+            }, 3000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                console.log("⏹️ Auto-refresh stopped");
+            }
+        }
+
+        // ==================== MANUAL REFRESH ====================
+        function manualRefresh() {
+            loadAccessKeys();
+            loadRegisteredDevices();
+            showNotif("✅ Data refreshed!");
+        }
+
+        // ==================== RESET DATA ====================
+        function resetData() {
+            if (confirm("RESET SEMUA DATA?")) {
+                localStorage.removeItem('access_keys');
+                localStorage.removeItem('registered_devices');
+                accessKeys = [];
+                registeredDevices = {};
+                updateKeyGrid();
+                showNotif("⚠️ Data direset!", "error");
+            }
+        }
+
+        // ==================== LOGIN SYSTEM ====================
+        function login() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadAccessKeys();
+                loadRegisteredDevices();
+                startAutoRefresh();
+                showNotif("✅ Login berhasil!");
+                
+                console.log("ℹ️ Ketik resetData() untuk menghapus semua data");
+            } else {
+                alert("❌ Password salah!");
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+            currentFilter = 'all';
+            stopAutoRefresh();
+        }
+
+        // ==================== NOTIFICATION ====================
+        function showNotif(msg, type = 'success') {
+            const n = document.getElementById('notification');
+            n.innerText = msg;
+            n.className = `notification ${type}`;
+            n.style.display = 'block';
+            setTimeout(() => n.style.display = 'none', 2000);
+        }
+
+        // ==================== COPY TO CLIPBOARD ====================
+        function copyToClipboard(text, msg) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => showNotif(msg));
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showNotif(msg);
+            }
+        }
+
+        // ==================== EXPOSE FUNCTIONS ====================
+        window.login = login;
+        window.logout = logout;
+        window.generateAccessKey = generateAccessKey;
+        window.deleteKey = deleteKey;
+        window.copyKey = copyKey;
+        window.filterKeys = filterKeys;
+        window.clearAllKeys = clearAllKeys;
+        window.manualRefresh = manualRefresh;
+        window.resetData = resetData;
+    </script>
+</body>
+</html>

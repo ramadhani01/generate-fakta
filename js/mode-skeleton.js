@@ -76,7 +76,7 @@ Narasi harus memiliki LEVEL (maksimal 6), setiap level menjelaskan efek fisik ya
 
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Buat level-level yang semakin ekstrem dengan efek fisik yang brutal.`;
+        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Buat perubahan yang semakin ekstrem dengan efek fisik yang brutal.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
         

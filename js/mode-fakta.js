@@ -73,7 +73,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         document.getElementById('naskahUtama').innerText = currentNaskah;
         
         if (elevenEnabled) {
-            document.getElementById('loadText').innerText = "🔊 Generate voice Rachel...";
+            document.getElementById('loadText').innerText = "🔊 Generate voice...";
         } else {
             document.getElementById('loadText').innerText = "⏸️ Voice disabled, lanjut ke scene...";
         }
@@ -97,7 +97,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
         const jumlahScene = scenes.length;
         const totalDurasi = jumlahScene * DURASI_PER_SCENE;
-        document.getElementById('sceneInfo').innerHTML = `🎬 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik video`;
+        document.getElementById('sceneInfo').innerHTML = `${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik video`;
         
         document.getElementById('loadText').innerText = "🎨 Generate prompt visual (TTI & ITV)...";
         
@@ -150,7 +150,7 @@ IMAGE TO VIDEO:
                 
                 sceneHtml += `
                     <div class="scene-item fakta-mode" data-scene="${i}">
-                        <div class="scene-number">🎬 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
+                        <div class="scene-number">SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
                         <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
                         
                         <div class="prompt-section">

@@ -3,9 +3,6 @@
 // Style lock untuk fakta unik (lebih umum)
 const STYLE_LOCK_FAKTA = "Sinematik ultra realistis, pencahayaan dramatis, detail tinggi, sudut kamera sinematik, depth of field, warna vibrant, 8K, fokus tajam, bukan animasi.";
 
-// Array untuk menyimpan topik yang sudah pernah digenerate
-let generatedFaktaTopics = [];
-
 async function generateFaktaUnik() {
     updateStats('total');
     
@@ -25,90 +22,36 @@ async function generateFaktaUnik() {
             document.getElementById('loadText').innerText = "🧠 Mencari ide fakta unik (voice OFF)...";
         }
         
-        // Daftar topik yang lebih bervariasi
-        const faktaTopics = [
+        const topics = [
             "luar angkasa", "sains", "hewan", "sejarah", "tubuh manusia",
             "teknologi", "psikologi", "alam", "makanan", "budaya aneh",
             "fenomena alam", "misteri", "penemuan", "mitos", "rahasia",
-            "kesehatan", "otak manusia", "dinosaurus", "samudra", "gunung berapi",
-            "fisika kuantum", "bintang", "planet", "galaksi", "black hole",
-            "serangga", "reptil", "mamalia", "burung", "ikan",
-            "peradaban kuno", "perang", "tokoh sejarah", "arsitektur", "piramida",
-            "virus", "bakteri", "sel", "DNA", "genetik",
-            "robot", "AI", "internet", "smartphone", "gadget",
-            "emosi", "mimpi", "ingatan", "kepribadian", "intuisi",
-            "gunung", "sungai", "danau", "pantai", "pulau",
-            "minuman", "buah", "sayur", "daging", "rempah",
-            "tradisi", "upacara", "festival", "mitologi", "legenda"
+            "kesehatan", "otak manusia", "dinosaurus", "samudra", "gunung berapi"
         ];
-        
-        // Filter topik yang belum pernah digenerate
-        let availableTopics = faktaTopics.filter(topic => !generatedFaktaTopics.includes(topic));
-        
-        // Jika semua topik sudah pernah, reset array
-        if (availableTopics.length === 0) {
-            generatedFaktaTopics = [];
-            availableTopics = faktaTopics;
-        }
-        
-        // Pilih topik random dari yang tersedia
-        const randomTopic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
-        
-        // Simpan topik yang sudah dipilih
-        generatedFaktaTopics.push(randomTopic);
-        
-        // Batasi array agar tidak terlalu besar
-        if (generatedFaktaTopics.length > 50) {
-            generatedFaktaTopics = generatedFaktaTopics.slice(-30);
-        }
+        const topic = topics[Math.floor(Math.random() * topics.length)];
         
         const systemPromptNaskah = `Anda adalah penulis konten viral. Buat naskah dengan FORMAT WAJIB:
 
 1. Judul clickbait ambil dari fakta tersebut (pakai emoji, maks 60 karakter)
 2. Naskah DIMULAI dengan "Apa kamu tahu," (HANYA SEKALI di awal)
-3. Setelah itu, berikan SATU fakta unik tentang ${randomTopic}
+3. Setelah itu, berikan SATU fakta unik tentang ${topic}
 4. Jelaskan fakta tersebut dengan PANJANG dan DETAIL (minimal 100 kata)
 5. Naskah harus mengalir dengan baik, terdiri dari 5-7 kalimat yang saling berkesinambungan
 
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPromptNaskah = `Buat konten video pendek tentang SATU fakta unik ${randomTopic}. Berikan SATU fakta dengan penjelasan panjang dan detail minimal 100 kata.`;
+        const userPromptNaskah = `Buat konten video pendek tentang SATU fakta unik ${topic}. Berikan SATU fakta dengan penjelasan panjang dan detail minimal 100 kata.`;
         
         const rawNaskah = await callGroq(userPromptNaskah, systemPromptNaskah);
         
-        // Parse JSON dengan validasi ketat
-        let parsed;
-        try { 
-            parsed = JSON.parse(rawNaskah); 
-        } catch {
-            // Coba ambil JSON dari dalam teks
-            const jsonMatch = rawNaskah.match(/{[\s\S]*?}/);
-            if (jsonMatch) {
-                try {
-                    parsed = JSON.parse(jsonMatch[0]);
-                } catch {
-                    throw new Error("Gagal parse JSON dari response AI");
-                }
-            } else {
-                throw new Error("Response AI tidak mengandung JSON yang valid");
-            }
-        }
+        const cleanNaskah = parseJSONRobust(rawNaskah);
         
-        // Validasi parsed object
-        if (!parsed || typeof parsed !== 'object') {
-            throw new Error("Parsed result bukan object");
-        }
+        currentJudul = cleanNaskah.judul;
+        currentNaskah = cleanNaskah.naskah;
         
-        if (!parsed.judul || typeof parsed.judul !== 'string' || parsed.judul.trim() === '') {
-            throw new Error("Judul tidak valid dari AI");
+        if (!currentNaskah || currentNaskah.length < 100) {
+            throw new Error("Naskah terlalu pendek");
         }
-        
-        if (!parsed.naskah || typeof parsed.naskah !== 'string' || parsed.naskah.length < 100) {
-            throw new Error("Naskah terlalu pendek atau tidak valid");
-        }
-        
-        currentJudul = parsed.judul;
-        currentNaskah = parsed.naskah;
         
         document.getElementById('judulText').innerText = currentJudul;
         document.getElementById('naskahUtama').innerText = currentNaskah;
@@ -242,6 +185,61 @@ IMAGE TO VIDEO:
     } finally {
         load.style.display = 'none';
     }
+}
+
+// ==================== PARSING JSON ROBUST ====================
+function parseJSONRobust(rawText) {
+    try {
+        return JSON.parse(rawText);
+    } catch (e) {
+        console.log("Parse langsung gagal, coba metode lain...");
+    }
+    
+    const jsonMatch = rawText.match(/```(?:json)?\s*({[\s\S]*?})\s*```/);
+    if (jsonMatch) {
+        try {
+            return JSON.parse(jsonMatch[1]);
+        } catch (e) {}
+    }
+    
+    const firstBrace = rawText.indexOf('{');
+    const lastBrace = rawText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        try {
+            const jsonStr = rawText.substring(firstBrace, lastBrace + 1);
+            return JSON.parse(jsonStr);
+        } catch (e) {}
+    }
+    
+    // Fallback manual
+    const cleanText = rawText
+        .replace(/```[a-z]*/gi, '')
+        .replace(/`/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/#/g, '')
+        .trim();
+    
+    const lines = cleanText.split('\n').filter(l => l.trim().length > 0);
+    
+    let judul = "🔴 FAKTA UNIK YANG MENGEJUTKAN!";
+    let naskah = cleanText;
+    
+    for (let line of lines) {
+        if (line.match(/[🔴🟠🟡🟢🔵🟣⚡🔥💫]/) && line.length < 100) {
+            judul = line.trim();
+            naskah = cleanText.replace(line, '').trim();
+            break;
+        }
+    }
+    
+    judul = judul.replace(/^(judul|title):?\s*/i, '').trim();
+    naskah = naskah.replace(/^(naskah|script):?\s*/i, '').trim();
+    
+    if (!naskah.toLowerCase().includes('apa kamu tahu')) {
+        naskah = "Apa kamu tahu, " + naskah;
+    }
+    
+    return { judul, naskah };
 }
 
 // ==================== HITUNG JUMLAH SCENE ====================

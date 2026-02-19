@@ -83,14 +83,10 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         document.getElementById('naskahUtama').innerText = currentNaskah;
         
         if (elevenEnabled) {
-            document.getElementById('loadText').innerText = "🔊 Generate voice dengan variasi style...";
-            
-            // Random style untuk variasi voice fakta (cenderung happy/excited)
-            const randomStyle = (Math.random() * 1.2) - 0.2; // Range -0.2 sampai 1.0
-            const randomSpeed = 0.9 + (Math.random() * 0.3); // Range 0.9 sampai 1.2
+            document.getElementById('loadText').innerText = "🔊 Generate voice...";
             
             try { 
-                await generateAudio(currentNaskah, false, randomStyle, randomSpeed); 
+                await generateAudio(currentNaskah, false); 
             } catch (audioError) {
                 document.getElementById('audioBox').innerHTML = `<div style="color:#b91c1c;">❌ Voice error: ${audioError.message}</div>`;
                 document.getElementById('audioBox').style.display = 'block';

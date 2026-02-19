@@ -162,12 +162,146 @@
     <script src="js/mode-islami.js"></script>
     
     <script>
-        // Inisialisasi utama
+        // ==================== FUNGSI VALIDASI ACCESS KEY DENGAN PESAN ERROR ====================
+        function validateAccessKey() {
+            const inputKey = document.getElementById('accessKeyInput').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            // Reset styling
+            errorDiv.style.display = 'none';
+            
+            if (!inputKey) {
+                errorText.innerText = "Key tidak boleh kosong!";
+                errorDiv.style.display = 'block';
+                setTimeout(() => errorDiv.style.display = 'none', 3000);
+                return;
+            }
+            
+            // Load access keys dari localStorage
+            const savedKeys = localStorage.getItem('access_keys');
+            let accessKeys = [];
+            if (savedKeys) {
+                accessKeys = JSON.parse(savedKeys);
+            }
+            
+            console.log("🔑 Mencari key:", inputKey);
+            console.log("📋 Semua keys:", accessKeys);
+            
+            // Cari key di database
+            const keyIndex = accessKeys.findIndex(k => k.key === inputKey);
+            
+            // KALAU KEY TIDAK DITEMUKAN
+            if (keyIndex === -1) {
+                console.log("❌ Key tidak ditemukan");
+                errorText.innerText = "KEY EXPIRED!";
+                errorDiv.style.display = 'block';
+                // Animasi shake
+                errorDiv.style.animation = 'shake 0.3s ease';
+                setTimeout(() => {
+                    errorDiv.style.animation = '';
+                    errorDiv.style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            const keyData = accessKeys[keyIndex];
+            console.log("✅ Key ditemukan:", keyData);
+            
+            // KALAU KEY SUDAH PERNAH DIPAKAI (status success)
+            if (keyData.status === 'success') {
+                console.log("❌ Key sudah digunakan");
+                errorText.innerText = "KEY ALREADY USED!";
+                errorDiv.style.display = 'block';
+                // Animasi shake
+                errorDiv.style.animation = 'shake 0.3s ease';
+                setTimeout(() => {
+                    errorDiv.style.animation = '';
+                    errorDiv.style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            // KALAU KEY SIAP DIPAKAI (status ready)
+            if (keyData.status === 'ready') {
+                console.log("✅ Key ready, akan diubah menjadi success");
+                
+                // Dapatkan device ID dari fungsi utama
+                const currentDeviceId = typeof deviceId !== 'undefined' ? deviceId : generateDeviceId?.() || 'unknown';
+                
+                // Update status key jadi success
+                accessKeys[keyIndex].status = 'success';
+                accessKeys[keyIndex].deviceId = currentDeviceId;
+                accessKeys[keyIndex].usedAt = new Date().toISOString();
+                
+                // Simpan ke localStorage
+                localStorage.setItem('access_keys', JSON.stringify(accessKeys));
+                console.log("💾 Key updated:", accessKeys[keyIndex]);
+                
+                // Daftarkan device
+                const registeredDevices = JSON.parse(localStorage.getItem('registered_devices') || '{}');
+                registeredDevices[currentDeviceId] = {
+                    key: inputKey,
+                    registeredAt: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform
+                };
+                localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
+                console.log("💾 Device registered:", registeredDevices[currentDeviceId]);
+                
+                showNotif("✅ Access granted! Selamat datang.");
+                closeAccessModal();
+                
+                // Panggil checkAllStatus jika ada
+                if (typeof checkAllStatus === 'function') {
+                    checkAllStatus();
+                }
+                
+            } else {
+                console.log("❌ Status key tidak dikenal:", keyData.status);
+                errorText.innerText = "Status key tidak valid!";
+                errorDiv.style.display = 'block';
+                setTimeout(() => errorDiv.style.display = 'none', 3000);
+            }
+        }
+
+        // ==================== FUNGSI SHOW NOTIF (jika belum ada) ====================
+        function showNotif(msg, type = 'success') {
+            const n = document.getElementById('notif');
+            if (n) {
+                n.innerText = msg;
+                n.style.backgroundColor = type === 'success' ? '#22c55e' : '#ef4444';
+                n.style.display = 'block';
+                setTimeout(() => n.style.display = 'none', 2000);
+            } else {
+                alert(msg);
+            }
+        }
+
+        // ==================== FUNGSI CLOSE MODAL ====================
+        function closeAccessModal() {
+            document.getElementById('accessKeyModal').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+        }
+
+        // ==================== INISIALISASI UTAMA ====================
         window.onload = async function() {
-            await initApp();
-            // Default mode fakta
-            switchMode('fakta');
+            // Cek apakah initApp ada
+            if (typeof initApp === 'function') {
+                await initApp();
+                // Default mode fakta
+                switchMode('fakta');
+            } else {
+                console.error("initApp tidak ditemukan! Pastikan file js/fungsi-utama.js terload.");
+                // Fallback: tampilkan modal key
+                document.getElementById('accessKeyModal').style.display = 'flex';
+            }
         };
+
+        // Ekspor fungsi ke global
+        window.validateAccessKey = validateAccessKey;
+        window.showNotif = showNotif;
+        window.closeAccessModal = closeAccessModal;
     </script>
 </body>
 </html>

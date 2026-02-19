@@ -2,8 +2,23 @@
 
 const STYLE_LOCK_SKELETON = "Ultra-realistic cinematic 3D render dari sosok kerangka humanoid dengan lapisan tubuh transparan seperti kristal/gelas menutupi tulang, tengkorak anatomi yang jelas dengan gigi terlihat dan memiliki bola mata asli, tampilan semi-x-ray, realitas edukatif dan surealis, tidak menakutkan, bukan kartun, detail ultra tinggi, fokus tajam, 8K.";
 
-// Array untuk menyimpan ide yang sudah pernah digenerate
+// Array untuk menyimpan ide yang sudah pernah digenerate (disimpan di localStorage agar permanen)
 let generatedSkeletonIdeas = [];
+
+// Load ide yang sudah pernah digenerate dari localStorage
+function loadGeneratedSkeletonIdeas() {
+    const saved = localStorage.getItem('generated_skeleton_ideas');
+    if (saved) {
+        generatedSkeletonIdeas = JSON.parse(saved);
+    } else {
+        generatedSkeletonIdeas = [];
+    }
+}
+
+// Simpan ide yang sudah digenerate ke localStorage
+function saveGeneratedSkeletonIdeas() {
+    localStorage.setItem('generated_skeleton_ideas', JSON.stringify(generatedSkeletonIdeas));
+}
 
 async function generateSkeleton() {
     updateStats('total');
@@ -18,65 +33,92 @@ async function generateSkeleton() {
     sceneData = [];
     
     try {
-        document.getElementById('loadText').innerText = "💀 Meracik ide extreme tengkorak...";
+        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh untuk skeleton...";
         
-        // Daftar tema yang lebih bervariasi
-        const skeletonThemes = [
-            "nyetir motor nonstop sampai tulang punggung menyatu",
-            "minum kopi sampai jantung berhenti",
-            "tidur nonstop sampai tubuh membusuk",
-            "menahan buang air kecil sampai kandung kemih pecah",
-            "main game sampai mata buta",
-            "scroll tiktok sampai otak tumpah",
-            "angkat beban sampai otot robek",
-            "lari marathon sampai tulang hancur",
-            "puasa sampai lambung bolong",
-            "tertawa sampai rahang lepas",
-            "nangis sampai mata kering",
-            "diem di tempat sampai kaki membusuk",
-            "makan pedas sampai usus terbakar",
-            "minum alkohol sampai hati rusak",
-            "merokok sampai paru-paru hitam",
-            "begadang sampai halusinasi",
-            "stres sampai rambut rontok semua",
-            "kerja lembur sampai jantung kolaps"
-        ];
+        // Load ide yang sudah pernah digenerate
+        loadGeneratedSkeletonIdeas();
         
-        // Filter tema yang belum pernah digenerate
-        let availableThemes = skeletonThemes.filter(theme => !generatedSkeletonIdeas.includes(theme));
+        // Buat daftar tema yang sudah pernah digunakan sebagai konteks
+        const usedThemesContext = generatedSkeletonIdeas.length > 0 
+            ? `Tema yang sudah pernah digunakan: ${generatedSkeletonIdeas.join(', ')}. JANGAN gunakan tema-tema ini, cari tema yang BENAR-BENAR BARU dan BELUM PERNAH ADA di daftar ini.`
+            : `Belum ada tema yang digunakan, bebas memilih tema apapun yang fresh dan unik.`;
         
-        // Jika semua tema sudah pernah, reset array
-        if (availableThemes.length === 0) {
-            generatedSkeletonIdeas = [];
-            availableThemes = skeletonThemes;
+        // AI akan mencari tema sendiri
+        const systemCariTema = `Anda adalah kreator konten video pendek dengan gaya "manusia tengkorak" yang ekstrem dan sinematik.
+
+Tugas PERTAMA: Cari SATU tema FRESH dan UNIK yang BELUM PERNAH digunakan sebelumnya.
+
+${usedThemesContext}
+
+Tema harus tentang aktivitas manusia sehari-hari yang jika dilakukan BERLEBIHAN akan menyebabkan kerusakan fisik ekstrem pada tubuh, terutama tulang, otot, saraf, dan organ dalam.
+
+Contoh tema (hanya referensi, JANGAN gunakan ini jika sudah ada di daftar):
+- "scroll tiktok sampai otak tumpah"
+- "nyetir motor nonstop sampai tulang punggung menyatu"
+- "minum kopi sampai jantung berhenti"
+- "tidur nonstop sampai tubuh membusuk"
+- "main game sampai mata buta"
+
+Tema harus KREATIF, BELUM PERNAH ADA, dan MENARIK. Pikirkan aktivitas modern atau tradisional yang bisa dieksploitasi secara ekstrem.
+
+Output HANYA tema dalam SATU KALIMAT (tanpa penjelasan lain):`;
+        
+        // Minta AI mencari tema
+        const temaResponse = await callGroq("Cari tema skeleton yang fresh dan belum pernah digunakan", systemCariTema);
+        
+        // Bersihkan tema dari kemungkinan tanda baca berlebih
+        let randomTheme = temaResponse
+            .replace(/["']/g, '')
+            .replace(/^[•\-*\d.\s]+/g, '')
+            .trim();
+        
+        // Jika tema terlalu panjang, potong
+        if (randomTheme.length > 100) {
+            randomTheme = randomTheme.substring(0, 100) + '...';
         }
-        
-        // Pilih tema random dari yang tersedia
-        const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
         
         // Simpan tema yang sudah dipilih
         generatedSkeletonIdeas.push(randomTheme);
         
-        // Batasi array agar tidak terlalu besar (opsional)
-        if (generatedSkeletonIdeas.length > 50) {
-            generatedSkeletonIdeas = generatedSkeletonIdeas.slice(-30);
+        // Simpan ke localStorage
+        saveGeneratedSkeletonIdeas();
+        
+        // Batasi array agar tidak terlalu besar
+        if (generatedSkeletonIdeas.length > 100) {
+            generatedSkeletonIdeas = generatedSkeletonIdeas.slice(-50);
+            saveGeneratedSkeletonIdeas();
         }
         
-        const systemNarasi = `Anda adalah kreator konten video pendek dengan gaya "manusia tengkorak". 
-Tugas: buat SATU narasi dengan format berikut:
+        document.getElementById('loadText').innerText = `💀 Tema ditemukan: ${randomTheme.substring(0, 50)}... Menulis narasi...`;
+        
+        const systemNarasi = `Anda adalah kreator konten video pendek dengan gaya "manusia tengkorak" yang ekstrem dan sinematik.
 
-[JUDUL] : kalimat clickbait "Seberapa [kuat/ lama/ banyak] ... sampai ...?" (pakai emoji)
+Tugas: Buat SATU narasi dengan format berikut:
 
-[NARASI] : Struktur wajib seperti contoh:
-"Seberapa kuat kamu tahan pedas dari level gorengan sampai level neraka jahanam? Level 1. Jalapeno. 5.000 scoville. Rasanya cuma geli-geli hangat di lidah. Kamu masih bisa senyum. Level 2. Cabe rawit 100.000 scoville. Keringat mulai netes. Bibirmu mulai menyala. Level 3. Habanero 350.000 scoville. Kupingmu berdenging. Kamu mulai cegukan. Level 4. Ghost pepper 1 juta scoville. Air matamu keluar deras, rasanya seperti menelan paku panas. Level 5. Carolina Reaper 2,2 juta scoville. Muntah api. Lambungmu terasa diperas. Level 6. Pepper X 2,69 juta scoville. Tenggorokanmu bengkak sampai menutup. Level 7. Pure capsaicin crystal 16 juta scoville. Lidahmu menyerah dan kabur."
+[JUDUL] : Kalimat clickbait "Seberapa [kuat/lama/banyak] ... sampai ...?" (pakai emoji, maks 60 karakter)
+
+[NARASI] : Ceritakan perubahan fisik yang terjadi secara PROGRESIF dengan struktur:
+
+"Awalnya cuma [gejala awal]. Setelah [waktu], [penjelasan detail]. Selama [waktu] berikutnya, [penjelasan lebih ekstrem]. Memasuki [waktu], [kondisi semakin parah]. Di titik [waktu], [puncak keparahan]. Akhirnya, [kondisi paling ekstrem/kematian]."
 
 Gunakan tema: ${randomTheme}
 
-Narasi harus memiliki LEVEL (maksimal 6), setiap level menjelaskan efek fisik yang makin ekstrem. Sertakan reaksi fisik seperti nyeri, otot, saraf, tulang. Gunakan satuan fiktif atau ilmiah yang sesuai. Bahasa Indonesia.
+Kriteria WAJIB:
+- Setiap tahapan memiliki PENJELASAN DETAIL (bukan cuma 1 kalimat)
+- Gunakan variasi waktu: detik, menit, jam, hari (sesuai tema)
+- Gambarkan sensasi fisik: nyeri, mati rasa, kram, panas, dingin, getaran, dll
+- Gambarkan efek pada TUBUH: otot, tulang, saraf, organ dalam
+- Narasi total 150-200 kata (cukup panjang untuk detail, tidak terlalu pendek)
+- JANGAN gunakan kata "Level 1, Level 2" atau angka level
+- Akhiri dengan kondisi paling ekstrem/kematian
+- Bahasa Indonesia yang deskriptif, sinematik, dan mengalir
+
+Contoh gaya (BUKAN untuk dicopy, tapi referensi struktur):
+"Awalnya cuma getaran kecil di tangan, seperti handphone bergetar di saku. Setelah 2 jam duduk di motor, mati rasa menjalar dari ujung jari hingga pergelangan, kamu tidak bisa menggenggam erat. Selama 4 jam berikutnya, kram menyiksa menjalar ke lengan, otot-otot menegang seperti kabel yang ditarik, nyeri menusuk di siku. Memasuki 8 jam perjalanan, tulang belakang mulai bergeser, setiap lubang di aspal terasa seperti palu godam di punggung. Di titik 12 jam, kamu tidak bisa berdiri tegak, postur tubuh membungkuk permanen, saraf kejepit di mana-mana. Akhirnya setelah 16 jam, tulang punggung menyatu sempurna, tubuhmu kaku seperti patung, kamu menjadi bagian dari motor selamanya."
 
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Buat perubahan yang semakin ekstrem dengan efek fisik yang brutal.`;
+        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Narasi progresif dengan detail setiap tahapan, total 150-200 kata, tanpa level angka.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
         
@@ -136,27 +178,49 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
         document.getElementById('loadText').innerText = "✂️ Membagi naskah menjadi scene...";
         
-        const kalimat = currentNaskah.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 15 && !s.toLowerCase().startsWith('seberapa'));
+        // Bagi naskah menjadi scene berdasarkan kalimat
+        const kalimat = currentNaskah
+            .split(/[.!?]+/)
+            .map(s => s.trim())
+            .filter(s => s.length > 15);
+        
         const scenes = kalimat.length >= 3 ? kalimat : [currentNaskah];
         
         const jumlahScene = scenes.length;
         const totalDurasi = jumlahScene * DURASI_PER_SCENE;
-        document.getElementById('sceneInfo').innerHTML = `💀 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik visual tengkorak sinematik`;
+        document.getElementById('sceneInfo').innerHTML = `💀 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik visual tengkorak sinematik (Tema baru: ${randomTheme.substring(0, 50)}...)`;
         
-        document.getElementById('loadText').innerText = "🎨 Generate prompt visual skeleton...";
+        document.getElementById('loadText').innerText = "🎨 Generate prompt visual skeleton (detail ekstrem)...";
         
         let sceneHtml = '';
         
         for(let i = 0; i < scenes.length; i++) {
-            const systemVisual = `Anda pembuat prompt video sinematik. Buat prompt Text-to-Image dan Image-to-Video terpisah untuk adegan berikut: "${scenes[i]}". WAJIB gunakan style lock berikut di awal setiap prompt: ${STYLE_LOCK_SKELETON}. Adegan harus merefleksikan narasi secara visual, ekspresi/gerakan kerangka sesuai skrip, sudut kamera variatif, latar belakang mendukung. 
+            // Prompt visual yang SANGAT DETAIL berdasarkan narasi
+            const systemVisual = `Anda adalah ahli pembuat prompt video sinematik untuk AI generatif. 
+Buat prompt Text-to-Image dan Image-to-Video yang SANGAT DETAIL dan SINEMATIK untuk adegan berikut dari narasi "manusia tengkorak":
+
+ADEGAN: "${scenes[i]}"
+
+WAJIB gunakan style lock ini di AWAL setiap prompt:
+${STYLE_LOCK_SKELETON}
+
+INSTRUKSI DETAIL UNTUK PROMPT:
+- Visualisasikan secara TEPAT apa yang terjadi dalam adegan tersebut
+- Deskripsikan POSISI TUBUH kerangka, EKSPRESI (meskipun kerangka), dan GERAKAN
+- Gambarkan EFEK FISIK yang disebutkan: nyeri, kram, getaran, patah, menyatu, dll
+- Sertakan LINGKUNGAN sekitar yang relevan dengan narasi (jalan, kamar, dll)
+- Gunakan istilah sinematik: close-up, extreme close-up, wide shot, dutch angle, slow motion, dll
+- Deskripsikan PENCAHAYAAN: dramatis, remang-remang, silau, dll
+- Deskripsikan WARNA DOMINAN dan SUASANA
+- Panjang prompt 60-100 kata, sangat deskriptif
 
 Output HARUS dengan format EXACT berikut (tanpa tambahan teks lain):
 
 TEXT TO IMAGE:
-[prompt text to image disini]
+[prompt text to image yang sangat detail disini]
 
 IMAGE TO VIDEO:
-[prompt image to video disini]`;
+[prompt image to video yang sangat detail disini - tambahkan instruksi gerakan, durasi, transisi]`;
             
             try {
                 const visualPrompt = await callGroq(scenes[i], systemVisual);
@@ -236,7 +300,7 @@ IMAGE TO VIDEO:
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene skeleton siap!`);
+        showNotif(`✅ ${jumlahScene} scene skeleton dengan tema fresh: ${randomTheme.substring(0, 60)}...`);
 
     } catch (e) {
         updateStats('fail');

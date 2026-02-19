@@ -72,7 +72,7 @@ Tugas: buat SATU narasi dengan format berikut:
 
 Gunakan tema: ${randomTheme}
 
-Narasi harus memiliki LEVEL (minimal 5 level, maksimal 8), setiap level menjelaskan efek fisik yang makin ekstrem. Sertakan reaksi fisik seperti nyeri, otot, saraf, tulang. Gunakan satuan fiktif atau ilmiah yang sesuai. Bahasa Indonesia.
+Narasi harus memiliki LEVEL (maksimal 6), setiap level menjelaskan efek fisik yang makin ekstrem. Sertakan reaksi fisik seperti nyeri, otot, saraf, tulang. Gunakan satuan fiktif atau ilmiah yang sesuai. Bahasa Indonesia.
 
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         

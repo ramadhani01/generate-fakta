@@ -168,7 +168,7 @@ body {
     align-items: center;
     gap: 15px;
     margin-bottom: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 .toggle-label {
     font-size: 13px;

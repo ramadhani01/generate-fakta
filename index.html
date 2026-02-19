@@ -7,9 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <!-- CSS Utama -->
-    <link rel="stylesheet" href="/css/style-utama.css">
+    <link rel="stylesheet" href="css/style-utama.css">
     <!-- CSS Mode akan dimuat via JS -->
-    <link rel="stylesheet" href="/css/style-fakta.css" id="mode-css">
+    <link rel="stylesheet" href="css/style-fakta.css" id="mode-css">
     
     <style>
         /* Fallback styling kalau CSS gagal load */
@@ -165,10 +165,10 @@
     <div id="notif" class="notification">✅ Copied!</div>
 
     <!-- JavaScript Modules -->
-    <script src="/js/fungsi-utama.js"></script>
-    <script src="/js/mode-fakta.js"></script>
-    <script src="/js/mode-skeleton.js"></script>
-    <script src="/js/mode-islami.js"></script>
+    <script src="js/fungsi-utama.js"></script>
+    <script src="js/mode-fakta.js"></script>
+    <script src="js/mode-skeleton.js"></script>
+    <script src="js/mode-islami.js"></script>
     
     <script>
         // Error handling global
@@ -184,38 +184,22 @@
             return false;
         };
 
-        // Fallback kalau initApp tidak terdefinisi
-        if (typeof initApp !== 'function') {
-            document.body.innerHTML = `<div class="loading-error">
-                <h2>⚠️ File JavaScript Tidak Ditemukan</h2>
-                <p>Pastikan file berikut ada di server:</p>
-                <ul>
-                    <li><strong>/js/fungsi-utama.js</strong> - ${typeof initApp}</li>
-                    <li>/js/mode-fakta.js</li>
-                    <li>/js/mode-skeleton.js</li>
-                    <li>/js/mode-islami.js</li>
-                </ul>
-                <p>Coba akses langsung: <a href="/js/fungsi-utama.js" target="_blank">/js/fungsi-utama.js</a></p>
-                <button onclick="location.reload()">Reload</button>
-            </div>`;
-        } else {
-            // Inisialisasi utama
-            window.onload = async function() {
-                try {
-                    console.log("Starting app...");
-                    await initApp();
-                    console.log("App initialized");
-                    switchMode('fakta');
-                } catch (e) {
-                    console.error("Init error:", e);
-                    document.body.innerHTML = `<div class="loading-error">
-                        <h2>⚠️ Failed to Initialize</h2>
-                        <p>${e.message}</p>
-                        <button onclick="location.reload()">Reload</button>
-                    </div>`;
-                }
-            };
-        }
+        // Inisialisasi utama
+        window.onload = async function() {
+            try {
+                console.log("Starting app...");
+                await initApp();
+                console.log("App initialized");
+                switchMode('fakta');
+            } catch (e) {
+                console.error("Init error:", e);
+                document.body.innerHTML = `<div class="loading-error">
+                    <h2>⚠️ Failed to Initialize</h2>
+                    <p>${e.message}</p>
+                    <button onclick="location.reload()">Reload</button>
+                </div>`;
+            }
+        };
     </script>
 </body>
 </html>

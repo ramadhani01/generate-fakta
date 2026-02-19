@@ -131,30 +131,8 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         if (elevenEnabled) {
             document.getElementById('loadText').innerText = "🔊 Generate voice Adam dengan style khidmat...";
             
-            // Untuk islami, style lebih tenang dan khidmat
-            let styleValue = -0.2; // Sedikit lebih tenang dari normal
-            let speedValue = 0.9; // Lebih lambat untuk kesan khusyuk
-            
-            // Deteksi kata kunci untuk variasi
-            const naskahLower = currentNaskah.toLowerCase();
-            
-            if (naskahLower.includes('tangis') || naskahLower.includes('menangis') || naskahLower.includes('haru')) {
-                styleValue = -0.1; // Haru, sedikit bergetar
-                speedValue = 0.85; // Lambat
-            } else if (naskahLower.includes('perang') || naskahLower.includes('pertempuran') || naskahLower.includes('berperang')) {
-                styleValue = 0.3; // Lebih bersemangat
-                speedValue = 1.0; // Normal
-            } else if (naskahLower.includes('mukjizat') || naskahLower.includes('keajaiban')) {
-                styleValue = 0.1; // Takjub
-                speedValue = 0.95; // Normal
-            } else {
-                // Default tenang
-                styleValue = -0.2 + (Math.random() * 0.2); // Range -0.2 sampai 0
-                speedValue = 0.85 + (Math.random() * 0.15); // Range 0.85 - 1.0
-            }
-            
             try { 
-                await generateAudio(currentNaskah, true, styleValue, speedValue); 
+                await generateAudio(currentNaskah, true); 
             } catch (audioError) {
                 document.getElementById('audioBox').innerHTML = `<div style="color:#b91c1c;">❌ Voice error: ${audioError.message}</div>`;
                 document.getElementById('audioBox').style.display = 'block';

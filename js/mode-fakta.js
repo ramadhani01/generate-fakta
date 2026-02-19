@@ -1,5 +1,8 @@
 // ========== MODE FAKTA UNIK ==========
 
+// Style lock untuk fakta unik (lebih umum)
+const STYLE_LOCK_FAKTA = "Sinematik ultra realistis, pencahayaan dramatis, detail tinggi, sudut kamera sinematik, depth of field, warna vibrant, 8K, fokus tajam, bukan animasi.";
+
 async function generateFaktaUnik() {
     updateStats('total');
     
@@ -78,44 +81,80 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         const totalDurasi = jumlahScene * DURASI_PER_SCENE;
         document.getElementById('sceneInfo').innerHTML = `🎬 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik video`;
         
-        document.getElementById('loadText').innerText = "🎨 Generate prompt visual...";
+        document.getElementById('loadText').innerText = "🎨 Generate prompt visual (TTI & ITV)...";
         
         let sceneHtml = '';
         
         for(let i = 0; i < scenes.length; i++) {
-            const systemPromptVisual = `Anda adalah ahli prompt video AI. Buat SATU PROMPT VIDEO SINEMATIK berdasarkan kalimat berikut.
+            const systemVisual = `Anda pembuat prompt video sinematik. Buat prompt Text-to-Image dan Image-to-Video terpisah untuk adegan berikut: "${scenes[i]}". WAJIB gunakan style lock berikut di awal setiap prompt: ${STYLE_LOCK_FAKTA}. Adegan harus merefleksikan narasi secara visual, sesuai dengan konteks fakta yang diceritakan.
 
-KALIMAT: "${scenes[i]}"
+Output HARUS dengan format EXACT berikut (tanpa tambahan teks lain):
 
-INSTRUKSI PENTING:
-- HASIL AKHIR HARUS HANYA PROMPT VIDEO, TANPA KATA "PROMPT:" ATAU PENJELASAN LAIN
-- Prompt harus visual murni, hanya deskripsi gambar/video
-- Gunakan istilah sinematik: close-up, wide shot, slow motion, dll
-- Sertakan pencahayaan, sudut kamera, suasana, warna dominan
-- Langsung berikan deskripsi visualnya saja`;
+TEXT TO IMAGE:
+[prompt text to image disini]
+
+IMAGE TO VIDEO:
+[prompt image to video disini]`;
             
             try {
-                const visualPrompt = await callGroq(scenes[i], systemPromptVisual);
+                const visualPrompt = await callGroq(scenes[i], systemVisual);
                 
-                let cleanPrompt = visualPrompt;
-                cleanPrompt = cleanPrompt.replace(/^(Prompt:|prompt:)/i, '').trim();
-                cleanPrompt = cleanPrompt.replace(/^["']|["']$/g, '');
+                // Bersihkan visual prompt
+                let cleanVisual = visualPrompt
+                    .replace(/Output.*?(?=TEXT)/gi, '')
+                    .replace(/Anda pembuat.*?(?=TEXT)/gi, '')
+                    .trim();
+                
+                // Parse prompt menjadi text-to-image dan image-to-video
+                let textToImage = "";
+                let imageToVideo = "";
+                
+                const ttiMatch = cleanVisual.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
+                if (ttiMatch && ttiMatch[1]) {
+                    textToImage = ttiMatch[1].trim();
+                }
+                
+                const itvMatch = cleanVisual.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
+                if (itvMatch && itvMatch[1]) {
+                    imageToVideo = itvMatch[1].trim();
+                }
+                
+                if (!textToImage) textToImage = "Prompt tidak tersedia";
+                if (!imageToVideo) imageToVideo = "Prompt tidak tersedia";
                 
                 sceneData.push({ 
-                    prompt: cleanPrompt, 
+                    textToImage: textToImage,
+                    imageToVideo: imageToVideo,
                     originalText: scenes[i],
-                    textToImage: cleanPrompt,
-                    imageToVideo: "Tidak tersedia untuk mode fakta",
-                    fullPrompt: cleanPrompt
+                    fullPrompt: cleanVisual
                 });
                 
                 sceneHtml += `
-                    <div class="scene-item">
+                    <div class="scene-item fakta-mode" data-scene="${i}">
                         <div class="scene-number">🎬 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
-                        <div class="scene-prompt">${cleanPrompt.substring(0, 120)}${cleanPrompt.length > 120 ? '...' : ''}</div>
-                        <div class="scene-actions">
-                            <button onclick="copyPrompt(${i})">📋 Copy Prompt</button>
-                            <button onclick="copyNarasi(${i})">📝 Copy Narasi</button>
+                        <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
+                        
+                        <div class="prompt-section">
+                            <div class="prompt-label">🖼️ TEXT TO IMAGE</div>
+                            <div class="prompt-content" id="tti-${i}">${textToImage.substring(0, 100)}${textToImage.length > 100 ? '...' : ''}</div>
+                            <div class="scene-actions">
+                                <button onclick="copyTextToImage(${i})" class="copy-tti">📋 Copy TTI</button>
+                                <button onclick="showFullPrompt(${i}, 'tti')" class="view-full">👁️ Lihat</button>
+                            </div>
+                        </div>
+                        
+                        <div class="prompt-section" style="margin-top: 12px;">
+                            <div class="prompt-label">🎬 IMAGE TO VIDEO</div>
+                            <div class="prompt-content" id="itv-${i}">${imageToVideo.substring(0, 100)}${imageToVideo.length > 100 ? '...' : ''}</div>
+                            <div class="scene-actions">
+                                <button onclick="copyImageToVideo(${i})" class="copy-itv">📋 Copy ITV</button>
+                                <button onclick="showFullPrompt(${i}, 'itv')" class="view-full">👁️ Lihat</button>
+                            </div>
+                        </div>
+                        
+                        <div class="scene-actions" style="margin-top: 12px;">
+                            <button onclick="copyFullPrompt(${i})" class="copy-full">📋 Copy Full</button>
+                            <button onclick="copyNarasi(${i})" class="copy-narasi">📝 Narasi</button>
                         </div>
                     </div>
                 `;
@@ -131,11 +170,14 @@ INSTRUKSI PENTING:
         
         document.getElementById('sceneGrid').innerHTML = sceneHtml;
         document.getElementById('copyPromptsBtn').style.display = 'block';
+        // Tampilkan tombol TTI/ITV untuk fakta mode juga
+        document.getElementById('copyAllTTIBtn').style.display = 'block';
+        document.getElementById('copyAllITVBtn').style.display = 'block';
         output.style.display = 'block';
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene berhasil digenerate!`);
+        showNotif(`✅ ${jumlahScene} scene fakta unik siap!`);
 
     } catch (e) {
         updateStats('fail');
@@ -145,6 +187,7 @@ INSTRUKSI PENTING:
     }
 }
 
+// ==================== PARSING JSON ROBUST ====================
 function parseJSONRobust(rawText) {
     try {
         return JSON.parse(rawText);
@@ -168,6 +211,7 @@ function parseJSONRobust(rawText) {
         } catch (e) {}
     }
     
+    // Fallback manual
     const cleanText = rawText
         .replace(/```[a-z]*/gi, '')
         .replace(/`/g, '')
@@ -198,6 +242,7 @@ function parseJSONRobust(rawText) {
     return { judul, naskah };
 }
 
+// ==================== HITUNG JUMLAH SCENE ====================
 function hitungJumlahScene(naskah) {
     const teksTanpaPembuka = naskah.replace(/^tahukah\s+kamu\??\s*/i, "");
     const kalimat = teksTanpaPembuka
@@ -207,6 +252,7 @@ function hitungJumlahScene(naskah) {
     return Math.max(kalimat.length, 1);
 }
 
+// ==================== BAGI NASKAH MENJADI SCENE ====================
 function bagiNaskahMenjadiScene(naskah, jumlahScene) {
     const teksTanpaPembuka = naskah.replace(/^tahukah\s+kamu\??\s*/i, "");
     const kalimat = teksTanpaPembuka

@@ -33,7 +33,7 @@ async function generateSkeleton() {
     sceneData = [];
     
     try {
-        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh untuk skeleton...";
+        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh...";
         
         // Load ide yang sudah pernah digenerate
         loadGeneratedSkeletonIdeas();
@@ -64,7 +64,7 @@ Tema harus KREATIF, BELUM PERNAH ADA, dan MENARIK. Pikirkan aktivitas modern ata
 Output HANYA tema dalam SATU KALIMAT (tanpa penjelasan lain):`;
         
         // Minta AI mencari tema
-        const temaResponse = await callGroq("Cari tema skeleton yang fresh dan belum pernah digunakan", systemCariTema);
+        const temaResponse = await callGroq("Cari tema fresh...", systemCariTema);
         
         // Bersihkan tema dari kemungkinan tanda baca berlebih
         let randomTheme = temaResponse
@@ -160,39 +160,10 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         document.getElementById('naskahUtama').innerText = currentNaskah;
         
         if (elevenEnabled) {
-            document.getElementById('loadText').innerText = "🔊 Generate voice dengan variasi style ekstrem...";
-            
-            // Untuk skeleton, style lebih tinggi (lebih ekstrem, shocked, scared)
-            // Deteksi kata kunci untuk menentukan style
-            let styleValue = 0.5; // Default excited
-            let speedValue = 1.0; // Default normal
-            
-            // Deteksi kata kunci di naskah untuk menentukan style
-            const naskahLower = currentNaskah.toLowerCase();
-            
-            if (naskahLower.includes('kaget') || naskahLower.includes('terkejut') || naskahLower.includes('mengerikan')) {
-                styleValue = 0.8; // Extreme shocked
-                speedValue = 1.2; // Cepat
-            } else if (naskahLower.includes('sakit') || naskahLower.includes('nyeri') || naskahLower.includes('perih')) {
-                styleValue = 0.3; // Sedikit ekspresif (kesakitan)
-                speedValue = 0.85; // Lambat, tertahan
-            } else if (naskahLower.includes('tertawa') || naskahLower.includes('geli') || naskahLower.includes('kocak')) {
-                styleValue = 0.7; // Excited
-                speedValue = 1.1; // Cepat
-            } else if (naskahLower.includes('takut') || naskahLower.includes('ngeri') || naskahLower.includes('horor')) {
-                styleValue = 0.6; // Scared
-                speedValue = 0.95; // Normal agak lambat
-            } else if (naskahLower.includes('lelah') || naskahLower.includes('capek') || naskahLower.includes('letih')) {
-                styleValue = -0.4; // Tired
-                speedValue = 0.8; // Lambat
-            } else {
-                // Random style untuk variasi
-                styleValue = 0.2 + (Math.random() * 0.8); // Range 0.2 - 1.0 (cenderung ekspresif)
-                speedValue = 0.9 + (Math.random() * 0.3); // Range 0.9 - 1.2
-            }
+            document.getElementById('loadText').innerText = "🔊 Generate voice...";
             
             try { 
-                await generateAudio(currentNaskah, false, styleValue, speedValue); 
+                await generateAudio(currentNaskah, false); 
             } catch (audioError) {
                 document.getElementById('audioBox').innerHTML = `<div style="color:#b91c1c;">❌ Voice error: ${audioError.message}</div>`;
                 document.getElementById('audioBox').style.display = 'block';
@@ -216,7 +187,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         const totalDurasi = jumlahScene * DURASI_PER_SCENE;
         document.getElementById('sceneInfo').innerHTML = `💀 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik visual tengkorak sinematik (Tema: ${randomTheme.substring(0, 40)}...)`;
         
-        document.getElementById('loadText').innerText = "🎨 Generate prompt visual skeleton (detail ekstrem)...";
+        document.getElementById('loadText').innerText = "🎨 Generate prompt...";
         
         let sceneHtml = '';
         

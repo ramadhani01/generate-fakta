@@ -11,7 +11,7 @@ function parseNarasiIslami(rawText) {
         .replace(/Output JSON murni:.*?({)/gi, '$1')
         .replace(/```json\s*/gi, '')
         .replace(/```\s*/gi, '')
-        .replace(/^\s*[\*\-\+]\s*/gm, '') // Hapus bullet points
+        .replace(/^\s*[\*\-\+]\s*/gm, '')
         .trim();
     
     // Coba parse JSON
@@ -26,7 +26,6 @@ function parseNarasiIslami(rawText) {
     let judul = "";
     let naskah = "";
     
-    // Cari baris yang mungkin judul (diawali emoji atau pendek)
     for (let line of lines) {
         if (line.match(/[🕌📖🤲☪️✨🌟⭐]/) || line.includes('!') || line.length < 100) {
             judul = line.trim();
@@ -34,13 +33,11 @@ function parseNarasiIslami(rawText) {
         }
     }
     
-    // Jika tidak ketemu, cari baris pertama sebagai judul
     if (!judul && lines.length > 0) {
         judul = lines[0].trim();
         lines.shift();
     }
     
-    // Ambil sisa sebagai naskah
     if (judul) {
         naskah = cleanText.replace(judul, '').trim();
     } else {
@@ -48,7 +45,6 @@ function parseNarasiIslami(rawText) {
         naskah = cleanText;
     }
     
-    // Bersihkan naskah dari instruksi yang tersisa
     naskah = naskah
         .replace(/^[:\s\-_*]+/g, '')
         .replace(/Pembukaan.*?(?=[A-Za-z])/gi, '')
@@ -56,10 +52,9 @@ function parseNarasiIslami(rawText) {
         .replace(/Hikmah.*?(?=[A-Za-z])/gi, '')
         .replace(/Penutup.*?(?=[A-Za-z])/gi, '')
         .replace(/^\s*[\*\-\+]\s*/gm, '')
-        .replace(/\n\s*\n\s*\n/g, '\n\n') // Hapus enter berlebih
+        .replace(/\n\s*\n\s*\n/g, '\n\n')
         .trim();
     
-    // Pastikan judul tidak terlalu panjang
     if (judul.length > 100) {
         judul = judul.substring(0, 97) + '...';
     }
@@ -109,16 +104,13 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         const userPrompt = `Buat satu kisah islami yang inspiratif dan penuh hikmah. Bisa tentang nabi, sahabat, atau peristiwa bersejarah dalam Islam.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
-        console.log("RAW ISLAMI:", raw);
         
-        // ========== GUNAKAN FUNGSI PARSING ==========
         let parsed;
         try { 
             parsed = JSON.parse(raw); 
         } catch {
             parsed = parseNarasiIslami(raw);
             if (!parsed.judul || !parsed.naskah || parsed.naskah.length < 50) {
-                // Fallback: jika masih gagal, buat manual
                 parsed = {
                     judul: "🕌 Kisah Islami Penuh Hikmah",
                     naskah: raw.replace(/[\[\]{}"]/g, '').trim()
@@ -155,7 +147,6 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
         document.getElementById('loadText').innerText = "✂️ Membagi kisah menjadi scene...";
         
-        // Split naskah menjadi kalimat untuk scene
         const kalimat = currentNaskah.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
         const scenes = kalimat.length >= 3 ? kalimat : [currentNaskah];
         
@@ -180,9 +171,8 @@ IMAGE TO VIDEO:
             
             try {
                 const visualPrompt = await callGroq(scenes[i], systemVisual);
-                console.log(`Scene ${i+1} prompt:`, visualPrompt);
                 
-                // Bersihkan visual prompt dari instruksi
+                // Bersihkan visual prompt
                 let cleanVisual = visualPrompt
                     .replace(/Output.*?(?=TEXT)/gi, '')
                     .replace(/Anda pembuat.*?(?=TEXT)/gi, '')
@@ -192,23 +182,18 @@ IMAGE TO VIDEO:
                 let textToImage = "";
                 let imageToVideo = "";
                 
-                // Cari bagian TEXT TO IMAGE:
                 const ttiMatch = cleanVisual.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
                 if (ttiMatch && ttiMatch[1]) {
                     textToImage = ttiMatch[1].trim();
                 }
                 
-                // Cari bagian IMAGE TO VIDEO:
                 const itvMatch = cleanVisual.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
                 if (itvMatch && itvMatch[1]) {
                     imageToVideo = itvMatch[1].trim();
                 }
                 
-                // Fallback jika parsing gagal
-                if (!textToImage && !imageToVideo) {
-                    textToImage = cleanVisual;
-                    imageToVideo = "Prompt tidak terdeteksi dengan format yang benar";
-                }
+                if (!textToImage) textToImage = "Prompt tidak tersedia";
+                if (!imageToVideo) imageToVideo = "Prompt tidak tersedia";
                 
                 sceneData.push({ 
                     textToImage: textToImage,

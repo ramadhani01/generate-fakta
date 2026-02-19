@@ -2,6 +2,9 @@
 
 const STYLE_LOCK_SKELETON = "Ultra-realistic cinematic 3D render dari sosok kerangka humanoid dengan lapisan tubuh transparan seperti kristal/gelas menutupi tulang, tengkorak anatomi yang jelas dengan gigi terlihat dan memiliki bola mata asli, tampilan semi-x-ray, realitas edukatif dan surealis, tidak menakutkan, bukan kartun, detail ultra tinggi, fokus tajam, 8K.";
 
+// Array untuk menyimpan ide yang sudah pernah digenerate
+let generatedSkeletonIdeas = [];
+
 async function generateSkeleton() {
     updateStats('total');
     
@@ -17,6 +20,48 @@ async function generateSkeleton() {
     try {
         document.getElementById('loadText').innerText = "💀 Meracik ide extreme tengkorak...";
         
+        // Daftar tema yang lebih bervariasi
+        const skeletonThemes = [
+            "nyetir motor nonstop sampai tulang punggung menyatu",
+            "minum kopi sampai jantung berhenti",
+            "tidur nonstop sampai tubuh membusuk",
+            "menahan buang air kecil sampai kandung kemih pecah",
+            "main game sampai mata buta",
+            "scroll tiktok sampai otak tumpah",
+            "angkat beban sampai otot robek",
+            "lari marathon sampai tulang hancur",
+            "puasa sampai lambung bolong",
+            "tertawa sampai rahang lepas",
+            "nangis sampai mata kering",
+            "diem di tempat sampai kaki membusuk",
+            "makan pedas sampai usus terbakar",
+            "minum alkohol sampai hati rusak",
+            "merokok sampai paru-paru hitam",
+            "begadang sampai halusinasi",
+            "stres sampai rambut rontok semua",
+            "kerja lembur sampai jantung kolaps"
+        ];
+        
+        // Filter tema yang belum pernah digenerate
+        let availableThemes = skeletonThemes.filter(theme => !generatedSkeletonIdeas.includes(theme));
+        
+        // Jika semua tema sudah pernah, reset array
+        if (availableThemes.length === 0) {
+            generatedSkeletonIdeas = [];
+            availableThemes = skeletonThemes;
+        }
+        
+        // Pilih tema random dari yang tersedia
+        const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+        
+        // Simpan tema yang sudah dipilih
+        generatedSkeletonIdeas.push(randomTheme);
+        
+        // Batasi array agar tidak terlalu besar (opsional)
+        if (generatedSkeletonIdeas.length > 50) {
+            generatedSkeletonIdeas = generatedSkeletonIdeas.slice(-30);
+        }
+        
         const systemNarasi = `Anda adalah kreator konten video pendek dengan gaya "manusia tengkorak". 
 Tugas: buat SATU narasi dengan format berikut:
 
@@ -25,30 +70,49 @@ Tugas: buat SATU narasi dengan format berikut:
 [NARASI] : Struktur wajib seperti contoh:
 "Seberapa kuat kamu tahan pedas dari level gorengan sampai level neraka jahanam? Level 1. Jalapeno. 5.000 scoville. Rasanya cuma geli-geli hangat di lidah. Kamu masih bisa senyum. Level 2. Cabe rawit 100.000 scoville. Keringat mulai netes. Bibirmu mulai menyala. Level 3. Habanero 350.000 scoville. Kupingmu berdenging. Kamu mulai cegukan. Level 4. Ghost pepper 1 juta scoville. Air matamu keluar deras, rasanya seperti menelan paku panas. Level 5. Carolina Reaper 2,2 juta scoville. Muntah api. Lambungmu terasa diperas. Level 6. Pepper X 2,69 juta scoville. Tenggorokanmu bengkak sampai menutup. Level 7. Pure capsaicin crystal 16 juta scoville. Lidahmu menyerah dan kabur."
 
-Gunakan tema yang berhubungan dengan batas tubuh manusia, tulang, saraf. 
-Contoh ide: 
-- Seberapa lama kamu kuat nyetir motor nonstop sampai tulang punggungmu menyatu?
-- Seberapa banyak kopi yang harus kamu minum sampai jantungmu nyerah?
-- Seberapa lama kamu bisa tidur nonstop sampai tubuhmu membusuk di atas kasur?
+Gunakan tema: ${randomTheme}
 
-Narasi harus memiliki LEVEL (minimal 5 level, maksimal 8), setiap level menjelaskan efek fisik yang makin ekstrem. Sertakan reaksi fisik seperti nyeri, otot, saraf, tulang. Bahasa Indonesia.
+Narasi harus memiliki LEVEL (minimal 5 level, maksimal 8), setiap level menjelaskan efek fisik yang makin ekstrem. Sertakan reaksi fisik seperti nyeri, otot, saraf, tulang. Gunakan satuan fiktif atau ilmiah yang sesuai. Bahasa Indonesia.
+
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema batas fisik ekstrem. Contoh: nyetir motor, tidur, minum kopi, menahan buang air, main game, scroll tiktok, angkat beban.`;
+        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Buat level-level yang semakin ekstrem dengan efek fisik yang brutal.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
         
+        // Parse JSON dengan validasi ketat
         let parsed;
         try { 
             parsed = JSON.parse(raw); 
         } catch {
-            const match = raw.match(/{[\s\S]*?}/);
-            if(match) parsed = JSON.parse(match[0]); else throw new Error("Gagal parse JSON");
+            // Coba ambil JSON dari dalam teks
+            const jsonMatch = raw.match(/{[\s\S]*?}/);
+            if (jsonMatch) {
+                try {
+                    parsed = JSON.parse(jsonMatch[0]);
+                } catch {
+                    throw new Error("Gagal parse JSON dari response AI");
+                }
+            } else {
+                throw new Error("Response AI tidak mengandung JSON yang valid");
+            }
+        }
+        
+        // Validasi parsed object
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error("Parsed result bukan object");
+        }
+        
+        if (!parsed.judul || typeof parsed.judul !== 'string' || parsed.judul.trim() === '') {
+            throw new Error("Judul tidak valid dari AI");
+        }
+        
+        if (!parsed.naskah || typeof parsed.naskah !== 'string' || parsed.naskah.length < 100) {
+            throw new Error("Naskah terlalu pendek atau tidak valid");
         }
         
         currentJudul = parsed.judul;
         currentNaskah = parsed.naskah;
-        if(!currentJudul || !currentNaskah || currentNaskah.length < 150) throw new Error("Naskah terlalu pendek");
         
         document.getElementById('judulText').innerText = currentJudul;
         document.getElementById('naskahUtama').innerText = currentNaskah;
@@ -97,29 +161,34 @@ IMAGE TO VIDEO:
             try {
                 const visualPrompt = await callGroq(scenes[i], systemVisual);
                 
+                // Bersihkan visual prompt
+                let cleanVisual = visualPrompt
+                    .replace(/Output.*?(?=TEXT)/gi, '')
+                    .replace(/Anda pembuat.*?(?=TEXT)/gi, '')
+                    .trim();
+                
+                // Parse prompt menjadi text-to-image dan image-to-video
                 let textToImage = "";
                 let imageToVideo = "";
                 
-                const ttiMatch = visualPrompt.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
+                const ttiMatch = cleanVisual.match(/TEXT TO IMAGE:?\s*([\s\S]*?)(?=IMAGE TO VIDEO:|$)/i);
                 if (ttiMatch && ttiMatch[1]) {
                     textToImage = ttiMatch[1].trim();
                 }
                 
-                const itvMatch = visualPrompt.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
+                const itvMatch = cleanVisual.match(/IMAGE TO VIDEO:?\s*([\s\S]*?)$/i);
                 if (itvMatch && itvMatch[1]) {
                     imageToVideo = itvMatch[1].trim();
                 }
                 
-                if (!textToImage && !imageToVideo) {
-                    textToImage = visualPrompt;
-                    imageToVideo = "Prompt tidak terdeteksi dengan format yang benar";
-                }
+                if (!textToImage) textToImage = "Prompt tidak tersedia";
+                if (!imageToVideo) imageToVideo = "Prompt tidak tersedia";
                 
                 sceneData.push({ 
                     textToImage: textToImage,
                     imageToVideo: imageToVideo,
                     originalText: scenes[i],
-                    fullPrompt: visualPrompt
+                    fullPrompt: cleanVisual
                 });
                 
                 sceneHtml += `

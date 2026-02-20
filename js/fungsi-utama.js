@@ -349,14 +349,26 @@ function saveEleven() {
 function updateStats(key) { 
     counts[key]++; 
     localStorage.setItem('counts', JSON.stringify(counts)); 
-    updateStatsDisplay(); 
+    
+    // AMAN: coba update display, tapi jangan error kalau elemen tidak ada
+    try {
+        updateStatsDisplay();
+    } catch (e) {
+        console.log("Stats display tidak bisa diupdate (elemen stats sudah dihapus)");
+    }
 }
 
 function updateStatsDisplay() {
-    document.getElementById('stat-total').innerText = counts.total; 
-    document.getElementById('stat-gen').innerText = counts.gen;
-    document.getElementById('stat-succ').innerText = counts.succ; 
-    document.getElementById('stat-fail').innerText = counts.fail;
+    const statTotal = document.getElementById('stat-total');
+    const statGen = document.getElementById('stat-gen');
+    const statSucc = document.getElementById('stat-succ');
+    const statFail = document.getElementById('stat-fail');
+    
+    // HANYA UPDATE JIKA ELEMEN DITEMUKAN
+    if (statTotal) statTotal.innerText = counts.total;
+    if (statGen) statGen.innerText = counts.gen;
+    if (statSucc) statSucc.innerText = counts.succ;
+    if (statFail) statFail.innerText = counts.fail;
 }
 
 // ==================== GROQ CALL ====================

@@ -1,8 +1,7 @@
 // ========== MODE MANUSIA TENGKORAK ==========
 
 // PERBAIKAN: Menambahkan instruksi transparansi total dan material kaca
-const STYLE_LOCK_SKELETON = "Ultra-realistic cinematic 3D render of a humanoid with 100% transparent glass-like crystal skin, internal white anatomical skeletal structure clearly visible inside, NO EXTERNAL SKIN, NO CLOTHES, ray-traced reflections on the glass surface, anatomical accuracy, non-scary, educational surrealism, high-end medical CGI, 8K resolution, sharp focus, octane render.";
-
+const STYLE_LOCK_SKELETON = "Ultra-realistic cinematic 3D render dari sosok kerangka humanoid dengan lapisan tubuh transparan seperti kristal/gelas menutupi tulang, tengkorak anatomi yang jelas dengan gigi terlihat dan memiliki bola mata asli, tampilan semi-x-ray, realitas edukatif dan surealis, tidak menakutkan, bukan kartun, detail ultra tinggi, fokus tajam, 8K."
 // Array untuk menyimpan ide yang sudah pernah digenerate
 let generatedSkeletonIdeas = [];
 

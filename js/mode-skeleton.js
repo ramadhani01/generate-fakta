@@ -175,13 +175,41 @@ ultra detailed anatomical realism.
 }
 
 /********************************************************
+ * ================= AI CALL ============================
+ ********************************************************/
+
+async function generateScriptFromAI(theme) {
+  // Ini harus diganti dengan callGroq yang sebenarnya
+  // Untuk sementara pakai mock
+  
+  return `
+Berapa lama kamu bisa ${theme}? 
+Awalnya tubuhmu terasa normal. 
+Perlahan tulang belakang mulai menegang. 
+Sendi-sendi kehilangan stabilitas. 
+Tekanan meningkat di setiap gerakan. 
+Tubuhmu mulai kehilangan kendali. 
+Dan akhirnya kamu mencapai batas maksimalnya.
+`;
+}
+
+/********************************************************
  * ================= MAIN GENERATOR =====================
  ********************************************************/
 
-async function generatedSkeleton(theme, jumlahSceneManual) {
+async function generateSkeletonWithParams(theme, jumlahSceneManual) {
   try {
-    showLoading(true);
-
+    // Panggil loading dari fungsi utama
+    if (typeof updateStats === 'function') updateStats('total');
+    
+    const load = document.getElementById('loading');
+    const output = document.getElementById('outputArea');
+    const errBox = document.getElementById('errorBox');
+    
+    if (load) load.style.display = 'block';
+    if (output) output.style.display = 'none';
+    if (errBox) errBox.innerHTML = '';
+    
     if (!theme || theme.trim() === "") {
       throw new Error("Tema kosong.");
     }
@@ -209,78 +237,140 @@ async function generatedSkeleton(theme, jumlahSceneManual) {
     generatedSkeletonIdeas.push(theme);
     saveGeneratedSkeletonIdeas();
 
-    renderResult({
-      title,
-      script: scriptClean,
-      scenes,
-      visualPrompts,
-      duration: totalDurasi
-    });
-
-    showLoading(false);
+    // Simpan ke variabel global
+    if (typeof currentJudul !== 'undefined') currentJudul = title;
+    if (typeof currentNaskah !== 'undefined') currentNaskah = scriptClean;
+    
+    // Tampilkan di UI
+    const judulText = document.getElementById('judulText');
+    const naskahUtama = document.getElementById('naskahUtama');
+    const sceneInfo = document.getElementById('sceneInfo');
+    const sceneGrid = document.getElementById('sceneGrid');
+    
+    if (judulText) judulText.innerText = title;
+    if (naskahUtama) naskahUtama.innerText = scriptClean;
+    if (sceneInfo) sceneInfo.innerHTML = `💀 ${scenes.length} Scene × ${DEFAULT_SECONDS_PER_SCENE} detik = ${totalDurasi} detik`;
+    
+    // Generate scene HTML
+    let sceneHtml = '';
+    for (let i = 0; i < scenes.length; i++) {
+      sceneHtml += `
+        <div class="scene-item">
+          <div class="scene-number">💀 SCENE ${i+1}</div>
+          <div class="scene-original"><small>📝 ${scenes[i].substring(0, 100)}...</small></div>
+          <div class="prompt-section">
+            <div class="prompt-label">🎬 VIDEO PROMPT</div>
+            <div class="prompt-content">${visualPrompts[i].substring(0, 150)}...</div>
+          </div>
+        </div>
+      `;
+    }
+    if (sceneGrid) sceneGrid.innerHTML = sceneHtml;
+    
+    // Tampilkan output
+    if (output) output.style.display = 'block';
+    
+    // Update stats
+    if (typeof updateStats === 'function') {
+      updateStats('gen');
+      updateStats('succ');
+    }
+    
+    if (typeof showNotif === 'function') {
+      showNotif(`✅ Script siap! Durasi: ${totalDurasi} detik`);
+    }
 
   } catch (error) {
     console.error(error);
-    showError(error.message);
-    showLoading(false);
+    if (typeof showNotif === 'function') {
+      showNotif("Error: " + error.message, "error");
+    }
+    if (typeof updateStats === 'function') updateStats('fail');
+  } finally {
+    const load = document.getElementById('loading');
+    if (load) load.style.display = 'none';
   }
 }
 
 /********************************************************
- * ================= RENDERING ==========================
+ * ================= EXPORT FUNCTION ====================
  ********************************************************/
 
-function renderResult(data) {
-  document.getElementById("titleOutput").innerHTML =
-    escapeHTML(data.title);
+// Fungsi utama yang dipanggil dari index.html (TANPA PARAMETER)
+async function generateSkeleton() {
+    try {
+        // Ambil nilai dari slider
+        const sceneSlider = document.getElementById('sceneSlider');
+        const jumlahSceneManual = parseInt(sceneSlider?.value || 5);
+        
+        // Panggil updateStats jika ada
+        if (typeof updateStats === 'function') updateStats('total');
+        
+        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh...";
+        
+        // Coba generate tema dari AI
+        let theme = "";
+        
+        try {
+            // Load ide yang sudah pernah digenerate
+            const usedThemes = generatedSkeletonIdeas.length > 0 
+                ? `Tema yang sudah pernah digunakan: ${generatedSkeletonIdeas.join(', ')}. JANGAN gunakan tema-tema ini.`
+                : `Belum ada tema yang digunakan.`;
+            
+            const systemCariTema = `Anda adalah kreator konten horror psikologis.
+Tugas: Cari SATU tema yang BELUM PERNAH digunakan sebelumnya.
 
-  document.getElementById("scriptOutput").innerHTML =
-    escapeHTML(data.script);
+${usedThemes}
 
-  const visualContainer =
-    document.getElementById("visualOutput");
+Tema harus tentang aktivitas manusia sehari-hari yang jika dilakukan BERLEBIHAN akan membuat tubuh dan pikiran perlahan hancur.
 
-  visualContainer.innerHTML = "";
+Contoh tema (jangan gunakan ini):
+- main game sampai mata buta
+- scroll tiktok sampai otak tumpah
+- begadang sampai halusinasi
 
-  data.visualPrompts.forEach((prompt, index) => {
-    const div = document.createElement("div");
-    div.className = "scene-block";
-    div.innerHTML = `
-      <h3>Scene ${index + 1}</h3>
-      <p>${escapeHTML(prompt)}</p>
-    `;
-    visualContainer.appendChild(div);
-  });
+Cari tema yang fresh, unik, dan belum pernah ada.
 
-  document.getElementById("durationOutput").innerHTML =
-    `Estimasi Durasi: ${data.duration} detik`;
+Output HANYA tema dalam SATU KALIMAT (tanpa penjelasan lain):`;
+            
+            const temaResponse = await callGroq("Cari tema fresh untuk skeleton...", systemCariTema);
+            theme = cleanThemeInput(temaResponse);
+            
+            if (!theme || theme.length < 3) {
+                throw new Error("Tema tidak valid");
+            }
+            
+        } catch (e) {
+            console.error("Error getting theme:", e);
+            // Fallback theme jika AI gagal
+            const fallbackThemes = [
+                "menatap layar tanpa henti",
+                "duduk diam berjam-jam",
+                "menahan kencing terlalu lama",
+                "tidur dengan posisi salah",
+                "mengedipkan mata terlalu jarang",
+                "menahan napas terlalu lama",
+                "membungkuk terlalu sering",
+                "mengepalkan tangan terus menerus"
+            ];
+            theme = fallbackThemes[Math.floor(Math.random() * fallbackThemes.length)];
+        }
+        
+        document.getElementById('loadText').innerText = `💀 Menulis script untuk: ${theme.substring(0, 50)}...`;
+        
+        // Panggil fungsi utama dengan parameter
+        await generateSkeletonWithParams(theme, jumlahSceneManual);
+
+    } catch (e) {
+        console.error("Generate error:", e);
+        if (typeof showNotif === 'function') {
+            showNotif("Error: " + e.message, "error");
+        }
+        if (typeof updateStats === 'function') updateStats('fail');
+        const load = document.getElementById('loading');
+        if (load) load.style.display = 'none';
+    }
 }
 
-/********************************************************
- * ================= MOCK AI CALL =======================
- ********************************************************/
-
-async function generateScriptFromAI(theme) {
-  return `
-Berapa lama kamu bisa ${theme}? 
-Awalnya tubuhmu terasa normal. 
-Perlahan tulang belakang mulai menegang. 
-Sendi-sendi kehilangan stabilitas. 
-Tekanan meningkat di setiap gerakan. 
-Tubuhmu mulai kehilangan kendali. 
-Dan akhirnya kamu mencapai batas maksimalnya.
-`;
-}
-
-/********************************************************
- * ================= UI HELPERS =========================
- ********************************************************/
-
-function showLoading(state) {
-  const loader = document.getElementById("loading");
-  loader.style.display = state ? "block" : "none";
-}
-
-function showError(message) {
-  alert(message);
-}
+// Ekspor ke global
+window.generateSkeleton = generateSkeleton;

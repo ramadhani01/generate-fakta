@@ -1,21 +1,23 @@
 /********************************************************
- * CONFIG
+ * ================== CONFIG ============================
  ********************************************************/
 
 const STYLE_LOCK_SKELETON = `
 Ultra-realistic cinematic 3D render of a humanoid skeleton
-with transparent crystal-like body layer covering anatomical bones,
-detailed skull with visible teeth,
+with transparent crystal-like crystal body layer covering bones,
+highly detailed skull with visible teeth,
 dramatic volumetric lighting,
 dark moody background,
 hyper realistic, ultra detailed, 8k render.
 `;
 
+const TITLE_PREFIX = "Berapa Lama Kamu";
+const MAX_THEME_LENGTH = 55;
 const MAX_SCENE = 8;
 const DEFAULT_SECONDS_PER_SCENE = 6;
 
 /********************************************************
- * MEMORY STORAGE
+ * ================= MEMORY STORAGE =====================
  ********************************************************/
 
 let generatedSkeletonIdeas =
@@ -29,25 +31,15 @@ function saveGeneratedSkeletonIdeas() {
 }
 
 /********************************************************
- * UTILITIES
+ * ================= UTILITIES ==========================
  ********************************************************/
+
+function normalizeSpaces(text) {
+  return text.replace(/\s+/g, " ").trim();
+}
 
 function normalizeText(text) {
   return text.toLowerCase().replace(/[^\w\s]/gi, '').trim();
-}
-
-function isDuplicateTheme(newTheme) {
-  const normalizedNew = normalizeText(newTheme);
-  return generatedSkeletonIdeas.some(theme =>
-    normalizeText(theme) === normalizedNew
-  );
-}
-
-function cleanAIOutput(text) {
-  return text
-    .replace(/```/g, '')
-    .replace(/^Output:\s*/i, '')
-    .trim();
 }
 
 function escapeHTML(str) {
@@ -59,12 +51,80 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-function calculateDuration(sceneCount, secondsPerScene = DEFAULT_SECONDS_PER_SCENE) {
-  return sceneCount * secondsPerScene;
+function cleanAIOutput(text) {
+  return text
+    .replace(/```/g, '')
+    .replace(/^Output:\s*/i, '')
+    .trim();
+}
+
+function calculateDuration(sceneCount) {
+  return sceneCount * DEFAULT_SECONDS_PER_SCENE;
 }
 
 /********************************************************
- * CINEMATIC STRUCTURE ENGINE
+ * ================= TITLE SYSTEM =======================
+ ********************************************************/
+
+function cleanThemeInput(theme) {
+  if (!theme || typeof theme !== "string") return "";
+
+  let t = theme.toLowerCase().trim();
+
+  // Hapus bagian setelah "sampai"
+  if (t.includes(" sampai ")) {
+    t = t.split(" sampai ")[0];
+  }
+
+  // Bersihkan awalan naratif
+  t = t
+    .replace(/^mengumpulkan dan mengoleksi\s+/i, "mengoleksi ")
+    .replace(/^mengumpulkan\s+/i, "mengumpulkan ")
+    .replace(/^melakukan\s+/i, "")
+    .replace(/^sedang\s+/i, "")
+    .replace(/^kegiatan\s+/i, "")
+    .replace(/^terus\s+/i, "")
+    .replace(/^yang\s+/i, "")
+    .replace(/^untuk\s+/i, "");
+
+  t = t.replace(/[^\w\s-]/g, "");
+  t = normalizeSpaces(t);
+
+  if (t.length > MAX_THEME_LENGTH) {
+    t = t.substring(0, MAX_THEME_LENGTH).trim();
+  }
+
+  return t;
+}
+
+function capitalizeFirst(text) {
+  if (!text) return "";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function formatJudul(theme) {
+  const cleaned = cleanThemeInput(theme);
+
+  if (!cleaned) {
+    return `${TITLE_PREFIX} Bertahan?`;
+  }
+
+  return `${TITLE_PREFIX} ${capitalizeFirst(cleaned)}?`;
+}
+
+/********************************************************
+ * ================= DUPLICATE CHECK ====================
+ ********************************************************/
+
+function isDuplicateTheme(newTheme) {
+  const normalizedNew = normalizeText(newTheme);
+  return generatedSkeletonIdeas.some(theme =>
+    normalizeText(theme) === normalizedNew
+  );
+}
+
+/********************************************************
+ * ================= SCENE ENGINE =======================
  ********************************************************/
 
 function splitIntoScenes(text, jumlahScene) {
@@ -88,20 +148,17 @@ function applyCinematicFlow(scenes) {
   if (scenes.length < 4) return scenes;
 
   return scenes.map((scene, index) => {
-    if (index === 0) {
-      return `HOOK MOMENT: ${scene}`;
-    } else if (index === scenes.length - 1) {
-      return `CLIMAX / FINAL IMPACT: ${scene}`;
-    } else if (index > scenes.length / 2) {
+    if (index === 0) return `HOOK MOMENT: ${scene}`;
+    if (index === scenes.length - 1)
+      return `CLIMAX IMPACT: ${scene}`;
+    if (index > scenes.length / 2)
       return `CHAOS PHASE: ${scene}`;
-    } else {
-      return `BUILD UP: ${scene}`;
-    }
+    return `BUILD UP: ${scene}`;
   });
 }
 
 /********************************************************
- * VISUAL PROMPT BUILDER
+ * ================= VISUAL PROMPT ======================
  ********************************************************/
 
 function buildVisualPrompt(sceneText) {
@@ -118,7 +175,7 @@ ultra detailed anatomical realism.
 }
 
 /********************************************************
- * MAIN GENERATOR FLOW
+ * ================= MAIN GENERATOR =====================
  ********************************************************/
 
 async function generateFullContent(theme, jumlahSceneManual) {
@@ -137,11 +194,12 @@ async function generateFullContent(theme, jumlahSceneManual) {
       jumlahSceneManual = MAX_SCENE;
     }
 
+    const title = formatJudul(theme);
+
     const scriptRaw = await generateScriptFromAI(theme);
     const scriptClean = cleanAIOutput(scriptRaw);
 
     const scenes = splitIntoScenes(scriptClean, jumlahSceneManual);
-
     const visualPrompts = scenes.map(scene =>
       buildVisualPrompt(scene)
     );
@@ -152,6 +210,7 @@ async function generateFullContent(theme, jumlahSceneManual) {
     saveGeneratedSkeletonIdeas();
 
     renderResult({
+      title,
       script: scriptClean,
       scenes,
       visualPrompts,
@@ -168,15 +227,18 @@ async function generateFullContent(theme, jumlahSceneManual) {
 }
 
 /********************************************************
- * RENDERING
+ * ================= RENDERING ==========================
  ********************************************************/
 
 function renderResult(data) {
-  const scriptContainer = document.getElementById("scriptOutput");
-  const visualContainer = document.getElementById("visualOutput");
-  const durationContainer = document.getElementById("durationOutput");
+  document.getElementById("titleOutput").innerHTML =
+    escapeHTML(data.title);
 
-  scriptContainer.innerHTML = escapeHTML(data.script);
+  document.getElementById("scriptOutput").innerHTML =
+    escapeHTML(data.script);
+
+  const visualContainer =
+    document.getElementById("visualOutput");
 
   visualContainer.innerHTML = "";
 
@@ -190,26 +252,28 @@ function renderResult(data) {
     visualContainer.appendChild(div);
   });
 
-  durationContainer.innerHTML =
+  document.getElementById("durationOutput").innerHTML =
     `Estimasi Durasi: ${data.duration} detik`;
 }
 
 /********************************************************
- * MOCK AI CALL (GANTI DENGAN API ASLI)
+ * ================= MOCK AI CALL =======================
  ********************************************************/
 
 async function generateScriptFromAI(theme) {
   return `
 Berapa lama kamu bisa ${theme}? 
-Awalnya tubuhmu masih kuat dan stabil. 
-Namun perlahan tulang belakang mulai terasa tegang. 
-Otot-otot kehilangan keseimbangan. 
-Sampai akhirnya tubuhmu mencapai batas maksimalnya.
+Awalnya tubuhmu terasa normal. 
+Perlahan tulang belakang mulai menegang. 
+Sendi-sendi kehilangan stabilitas. 
+Tekanan meningkat di setiap gerakan. 
+Tubuhmu mulai kehilangan kendali. 
+Dan akhirnya kamu mencapai batas maksimalnya.
 `;
 }
 
 /********************************************************
- * UI HELPERS
+ * ================= UI HELPERS =========================
  ********************************************************/
 
 function showLoading(state) {

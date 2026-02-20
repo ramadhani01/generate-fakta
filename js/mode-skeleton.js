@@ -178,7 +178,7 @@ ultra detailed anatomical realism.
  * ================= MAIN GENERATOR =====================
  ********************************************************/
 
-async function generatedSkeletonIdeas(theme, jumlahSceneManual) {
+async function generatedSkeleton(theme, jumlahSceneManual) {
   try {
     showLoading(true);
 

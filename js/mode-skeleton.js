@@ -1,376 +1,295 @@
-/********************************************************
- * ================== CONFIG ============================
- ********************************************************/
+// ========== MODE MANUSIA TENGKORAK ==========
 
-const STYLE_LOCK_SKELETON = `
-Ultra-realistic cinematic 3D render of a humanoid skeleton
-with transparent crystal-like crystal body layer covering bones,
-highly detailed skull with visible teeth,
-dramatic volumetric lighting,
-dark moody background,
-hyper realistic, ultra detailed, 8k render.
-`;
+const STYLE_LOCK_SKELETON = "Ultra-realistic cinematic 3D render dari sosok kerangka humanoid dengan lapisan tubuh transparan seperti kristal/gelas menutupi tulang, tengkorak anatomi yang jelas dengan gigi terlihat dan memiliki bola mata asli, tampilan semi-x-ray, realitas edukatif dan surealis, tidak menakutkan, bukan kartun, detail ultra tinggi, fokus tajam, 8K.";
 
-const TITLE_PREFIX = "Berapa Lama Kamu";
-const MAX_THEME_LENGTH = 55;
-const MAX_SCENE = 8;
-const DEFAULT_SECONDS_PER_SCENE = 6;
+// Array untuk menyimpan ide yang sudah pernah digenerate
+let generatedSkeletonIdeas = [];
 
-/********************************************************
- * ================= MEMORY STORAGE =====================
- ********************************************************/
-
-let generatedSkeletonIdeas =
-  JSON.parse(localStorage.getItem("skeletonIdeas")) || [];
-
-function saveGeneratedSkeletonIdeas() {
-  localStorage.setItem(
-    "skeletonIdeas",
-    JSON.stringify(generatedSkeletonIdeas)
-  );
-}
-
-/********************************************************
- * ================= UTILITIES ==========================
- ********************************************************/
-
-function normalizeSpaces(text) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-function normalizeText(text) {
-  return text.toLowerCase().replace(/[^\w\s]/gi, '').trim();
-}
-
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function cleanAIOutput(text) {
-  return text
-    .replace(/```/g, '')
-    .replace(/^Output:\s*/i, '')
-    .trim();
-}
-
-function calculateDuration(sceneCount) {
-  return sceneCount * DEFAULT_SECONDS_PER_SCENE;
-}
-
-/********************************************************
- * ================= TITLE SYSTEM =======================
- ********************************************************/
-
-function cleanThemeInput(theme) {
-  if (!theme || typeof theme !== "string") return "";
-
-  let t = theme.toLowerCase().trim();
-
-  // Hapus bagian setelah "sampai"
-  if (t.includes(" sampai ")) {
-    t = t.split(" sampai ")[0];
-  }
-
-  // Bersihkan awalan naratif
-  t = t
-    .replace(/^mengumpulkan dan mengoleksi\s+/i, "mengoleksi ")
-    .replace(/^mengumpulkan\s+/i, "mengumpulkan ")
-    .replace(/^melakukan\s+/i, "")
-    .replace(/^sedang\s+/i, "")
-    .replace(/^kegiatan\s+/i, "")
-    .replace(/^terus\s+/i, "")
-    .replace(/^yang\s+/i, "")
-    .replace(/^untuk\s+/i, "");
-
-  t = t.replace(/[^\w\s-]/g, "");
-  t = normalizeSpaces(t);
-
-  if (t.length > MAX_THEME_LENGTH) {
-    t = t.substring(0, MAX_THEME_LENGTH).trim();
-  }
-
-  return t;
-}
-
-function capitalizeFirst(text) {
-  if (!text) return "";
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function formatJudul(theme) {
-  const cleaned = cleanThemeInput(theme);
-
-  if (!cleaned) {
-    return `${TITLE_PREFIX} Bertahan?`;
-  }
-
-  return `${TITLE_PREFIX} ${capitalizeFirst(cleaned)}?`;
-}
-
-/********************************************************
- * ================= DUPLICATE CHECK ====================
- ********************************************************/
-
-function isDuplicateTheme(newTheme) {
-  const normalizedNew = normalizeText(newTheme);
-  return generatedSkeletonIdeas.some(theme =>
-    normalizeText(theme) === normalizedNew
-  );
-}
-
-/********************************************************
- * ================= SCENE ENGINE =======================
- ********************************************************/
-
-function splitIntoScenes(text, jumlahScene) {
-  const cleanText = text.replace(/\n/g, ' ').trim();
-  const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
-
-  const scenes = [];
-  const chunkSize = Math.ceil(sentences.length / jumlahScene);
-
-  for (let i = 0; i < jumlahScene; i++) {
-    const chunk = sentences.slice(i * chunkSize, (i + 1) * chunkSize);
-    if (chunk.length) {
-      scenes.push(chunk.join(' ').trim());
+// Load ide yang sudah pernah digenerate dari localStorage
+function loadGeneratedSkeletonIdeas() {
+    const saved = localStorage.getItem('generated_skeleton_ideas');
+    if (saved) {
+        generatedSkeletonIdeas = JSON.parse(saved);
+    } else {
+        generatedSkeletonIdeas = [];
     }
-  }
-
-  return applyCinematicFlow(scenes);
 }
 
-function applyCinematicFlow(scenes) {
-  if (scenes.length < 4) return scenes;
-
-  return scenes.map((scene, index) => {
-    if (index === 0) return `HOOK MOMENT: ${scene}`;
-    if (index === scenes.length - 1)
-      return `CLIMAX IMPACT: ${scene}`;
-    if (index > scenes.length / 2)
-      return `CHAOS PHASE: ${scene}`;
-    return `BUILD UP: ${scene}`;
-  });
+// Simpan ide yang sudah digenerate ke localStorage
+function saveGeneratedSkeletonIdeas() {
+    localStorage.setItem('generated_skeleton_ideas', JSON.stringify(generatedSkeletonIdeas));
 }
 
 /********************************************************
- * ================= VISUAL PROMPT ======================
+ * ================= TAHAP 1: IDE VIDEO =================
  ********************************************************/
 
-function buildVisualPrompt(sceneText) {
-  return `${STYLE_LOCK_SKELETON}
+async function generateVideoIdeas() {
+    const systemPromptIde = `Anda adalah kreator konten video pendek yang viral.
 
-SCENE DESCRIPTION:
-${sceneText}
+Buat 3 ide video pendek dengan format:
 
-Cinematic composition,
-dramatic depth of field,
-high contrast lighting,
-ultra detailed anatomical realism.
-`;
+* "Berapa Lama Anda Bisa ___?"
+* "Apa Yang Terjadi Jika Anda ___ Setiap Hari?"
+
+Aturan:
+- Tentang tubuh atau otak manusia saja
+- Ada eskalasi seiring berjalannya waktu
+- Dapat dijelaskan secara visual
+- Sedikit berbahaya (tapi tidak mematikan langsung)
+- Didasarkan pada kehidupan nyata
+
+Untuk setiap ide, tulis:
+[JUDUL] : [judul clickbait]
+[DESKRIPSI] : jalur kegagalan satu kalimat dalam bahasa sederhana.
+
+Contoh:
+[JUDUL] : Berapa Lama Anda Bisa Duduk Diam Tanpa Bergerak?
+[DESKRIPSI] : Otot kaku, sendi mengunci, aliran darah melambat sampai kaki mati rasa.
+
+Output dalam format JSON:
+{ "ide": [
+    { "judul": "string", "deskripsi": "string" },
+    { "judul": "string", "deskripsi": "string" },
+    { "judul": "string", "deskripsi": "string" }
+]}`;
+
+    const userPrompt = "Buat 3 ide video pendek tentang batas tubuh manusia";
+    const raw = await callGroq(userPrompt, systemPromptIde);
+    
+    let parsed;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        const jsonMatch = raw.match(/{[\s\S]*?}/);
+        if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+        } else {
+            throw new Error("Gagal parse ide video");
+        }
+    }
+    
+    return parsed.ide || [];
 }
 
 /********************************************************
- * ================= AI CALL ============================
+ * ================= TAHAP 2: SCRIPT ====================
  ********************************************************/
 
-async function generateScriptFromAI(theme) {
-  // Ini harus diganti dengan callGroq yang sebenarnya
-  // Untuk sementara pakai mock
-  
-  return `
-Berapa lama kamu bisa ${theme}? 
-Awalnya tubuhmu terasa normal. 
-Perlahan tulang belakang mulai menegang. 
-Sendi-sendi kehilangan stabilitas. 
-Tekanan meningkat di setiap gerakan. 
-Tubuhmu mulai kehilangan kendali. 
-Dan akhirnya kamu mencapai batas maksimalnya.
-`;
+async function generateScript(judul, jumlahScene) {
+    const systemPromptScript = `Anda adalah penulis script video pendek viral.
+
+Buat script berdurasi ${jumlahScene} scene dengan struktur ini:
+
+STRUKTUR WAJIB:
+* Scene 1: Pertanyaan pembuka (1 kalimat) - gunakan judul: "${judul}"
+* Scene 2 sampai ${jumlahScene-2}: Pos pemeriksaan waktu (Jam / Hari / Minggu / Bulan / Tahun)
+* Scene ${jumlahScene-1}: Momen realisasi tiba-tiba
+* Scene ${jumlahScene}: Kegagalan akhir
+
+Di setiap pos pemeriksaan (scene 2 sampai ${jumlahScene-2}) WAJIB mencakup:
+- Apa yang Anda rasakan secara fisik (sederhana, bisa dirasakan)
+- Apa yang Anda perhatikan secara mental (perubahan pikiran)
+- Satu perbandingan yang familiar (seperti mabuk, seperti kelelahan, seperti mesin kepanasan, seperti kehilangan sinyal)
+- Satu kalimat pendek lainnya
+
+ATURAN GAYA:
+- Bahasa sangat sederhana, seperti orang ngobrol
+- Tidak ada nama penyakit (jangan: dehidrasi, hipertensi, dll)
+- Tidak ada istilah lab atau biologi abstrak
+- Setiap baris harus mudah dibayangkan secara visual
+- Gunakan kata "kamu" agar terasa personal
+
+Contoh gaya:
+"Jam ke-12. Matamu mulai perih. Kepala terasa berat. Konsentrasimu buyar, seperti sinyal HP yang hilang di tengah hutan."
+
+Output JSON murni: { "script": [ "string", "string", ... ] }`;
+
+    const userPrompt = `Buat script ${jumlahScene} scene dengan judul: ${judul}`;
+    const raw = await callGroq(userPrompt, systemPromptScript);
+    
+    let parsed;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        const jsonMatch = raw.match(/{[\s\S]*?}/);
+        if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+        } else {
+            throw new Error("Gagal parse script");
+        }
+    }
+    
+    return parsed.script || [];
+}
+
+/********************************************************
+ * ================= TAHAP 3: PROMPT VISUAL =============
+ ********************************************************/
+
+async function generateVisualPrompt(sceneText, sceneNumber, totalScene) {
+    const systemVisual = `Anda adalah sutradara video AI dan pembuat prompt untuk video fotorealistik.
+
+Tugas: Ubah naskah narasi menjadi TEXT TO IMAGE prompt yang detail.
+
+ADEGAN: "${sceneText}"
+NOMOR ADEGAN: ${sceneNumber} dari ${totalScene}
+
+WAJIB gunakan STYLE LOCK di AWAL setiap prompt:
+${STYLE_LOCK_SKELETON}
+
+BUAT PROMPT TEXT TO IMAGE yang MENCakup:
+
+1. Deskripsi karakter LENGKAP (kerangka dengan lapisan transparan, detail anatomi)
+2. Lingkungan spesifik yang sesuai dengan adegan
+3. Pose dan bahasa tubuh yang mencerminkan narasi
+4. Pembingkaian kamera (close-up, wide shot, low angle, dll)
+5. Pencahayaan (dramatis, remang, kontras tinggi)
+6. Suasana hati (mencekam, menegangkan, lelah)
+7. Detail realisme (tekstur, bayangan, kedalaman)
+
+Output SATU PARAGRAF PROMPT LENGKAP (80-120 kata)`;
+
+    const raw = await callGroq(sceneText, systemVisual);
+    
+    let cleanPrompt = raw
+        .replace(/Output.*?(?=Ultra)/gi, '')
+        .replace(/Anda.*?(?=Ultra)/gi, '')
+        .replace(/^"|"$/g, '')
+        .trim();
+    
+    return cleanPrompt;
 }
 
 /********************************************************
  * ================= MAIN GENERATOR =====================
  ********************************************************/
 
-async function generateSkeletonWithParams(theme, jumlahSceneManual) {
-  try {
-    // Panggil loading dari fungsi utama
-    if (typeof updateStats === 'function') updateStats('total');
+async function generateSkeleton() {
+    updateStats('total');
     
     const load = document.getElementById('loading');
     const output = document.getElementById('outputArea');
     const errBox = document.getElementById('errorBox');
     
-    if (load) load.style.display = 'block';
-    if (output) output.style.display = 'none';
-    if (errBox) errBox.innerHTML = '';
+    load.style.display = 'block';
+    output.style.display = 'none';
+    errBox.innerHTML = '';
+    sceneData = [];
     
-    if (!theme || theme.trim() === "") {
-      throw new Error("Tema kosong.");
-    }
-
-    if (isDuplicateTheme(theme)) {
-      throw new Error("Tema sudah pernah digunakan.");
-    }
-
-    if (jumlahSceneManual > MAX_SCENE) {
-      jumlahSceneManual = MAX_SCENE;
-    }
-
-    const title = formatJudul(theme);
-
-    const scriptRaw = await generateScriptFromAI(theme);
-    const scriptClean = cleanAIOutput(scriptRaw);
-
-    const scenes = splitIntoScenes(scriptClean, jumlahSceneManual);
-    const visualPrompts = scenes.map(scene =>
-      buildVisualPrompt(scene)
-    );
-
-    const totalDurasi = calculateDuration(scenes.length);
-
-    generatedSkeletonIdeas.push(theme);
-    saveGeneratedSkeletonIdeas();
-
-    // Simpan ke variabel global
-    if (typeof currentJudul !== 'undefined') currentJudul = title;
-    if (typeof currentNaskah !== 'undefined') currentNaskah = scriptClean;
-    
-    // Tampilkan di UI
-    const judulText = document.getElementById('judulText');
-    const naskahUtama = document.getElementById('naskahUtama');
-    const sceneInfo = document.getElementById('sceneInfo');
-    const sceneGrid = document.getElementById('sceneGrid');
-    
-    if (judulText) judulText.innerText = title;
-    if (naskahUtama) naskahUtama.innerText = scriptClean;
-    if (sceneInfo) sceneInfo.innerHTML = `💀 ${scenes.length} Scene × ${DEFAULT_SECONDS_PER_SCENE} detik = ${totalDurasi} detik`;
-    
-    // Generate scene HTML
-    let sceneHtml = '';
-    for (let i = 0; i < scenes.length; i++) {
-      sceneHtml += `
-        <div class="scene-item">
-          <div class="scene-number">💀 SCENE ${i+1}</div>
-          <div class="scene-original"><small>📝 ${scenes[i].substring(0, 100)}...</small></div>
-          <div class="prompt-section">
-            <div class="prompt-label">🎬 VIDEO PROMPT</div>
-            <div class="prompt-content">${visualPrompts[i].substring(0, 150)}...</div>
-          </div>
-        </div>
-      `;
-    }
-    if (sceneGrid) sceneGrid.innerHTML = sceneHtml;
-    
-    // Tampilkan output
-    if (output) output.style.display = 'block';
-    
-    // Update stats
-    if (typeof updateStats === 'function') {
-      updateStats('gen');
-      updateStats('succ');
-    }
-    
-    if (typeof showNotif === 'function') {
-      showNotif(`✅ Script siap! Durasi: ${totalDurasi} detik`);
-    }
-
-  } catch (error) {
-    console.error(error);
-    if (typeof showNotif === 'function') {
-      showNotif("Error: " + error.message, "error");
-    }
-    if (typeof updateStats === 'function') updateStats('fail');
-  } finally {
-    const load = document.getElementById('loading');
-    if (load) load.style.display = 'none';
-  }
-}
-
-/********************************************************
- * ================= EXPORT FUNCTION ====================
- ********************************************************/
-
-// Fungsi utama yang dipanggil dari index.html (TANPA PARAMETER)
-async function generateSkeleton() {
     try {
-        // Ambil nilai dari slider
+        // AMBIL JUMLAH SCENE DARI SLIDER
         const sceneSlider = document.getElementById('sceneSlider');
         const jumlahSceneManual = parseInt(sceneSlider?.value || 5);
         
-        // Panggil updateStats jika ada
-        if (typeof updateStats === 'function') updateStats('total');
+        document.getElementById('loadText').innerText = "💀 TAHAP 1: Mencari ide video...";
         
-        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh...";
+        // TAHAP 1: Generate 3 ide video
+        const ideList = await generateVideoIdeas();
         
-        // Coba generate tema dari AI
-        let theme = "";
-        
-        try {
-            // Load ide yang sudah pernah digenerate
-            const usedThemes = generatedSkeletonIdeas.length > 0 
-                ? `Tema yang sudah pernah digunakan: ${generatedSkeletonIdeas.join(', ')}. JANGAN gunakan tema-tema ini.`
-                : `Belum ada tema yang digunakan.`;
-            
-            const systemCariTema = `Anda adalah kreator konten horror psikologis.
-Tugas: Cari SATU tema yang BELUM PERNAH digunakan sebelumnya.
-
-${usedThemes}
-
-Tema harus tentang aktivitas manusia sehari-hari yang jika dilakukan BERLEBIHAN akan membuat tubuh dan pikiran perlahan hancur.
-
-Contoh tema (jangan gunakan ini):
-- main game sampai mata buta
-- scroll tiktok sampai otak tumpah
-- begadang sampai halusinasi
-
-Cari tema yang fresh, unik, dan belum pernah ada.
-
-Output HANYA tema dalam SATU KALIMAT (tanpa penjelasan lain):`;
-            
-            const temaResponse = await callGroq("Cari tema fresh untuk skeleton...", systemCariTema);
-            theme = cleanThemeInput(temaResponse);
-            
-            if (!theme || theme.length < 3) {
-                throw new Error("Tema tidak valid");
-            }
-            
-        } catch (e) {
-            console.error("Error getting theme:", e);
-            // Fallback theme jika AI gagal
-            const fallbackThemes = [
-                "menatap layar tanpa henti",
-                "duduk diam berjam-jam",
-                "menahan kencing terlalu lama",
-                "tidur dengan posisi salah",
-                "mengedipkan mata terlalu jarang",
-                "menahan napas terlalu lama",
-                "membungkuk terlalu sering",
-                "mengepalkan tangan terus menerus"
-            ];
-            theme = fallbackThemes[Math.floor(Math.random() * fallbackThemes.length)];
+        if (!ideList || ideList.length === 0) {
+            throw new Error("Gagal mendapatkan ide video");
         }
         
-        document.getElementById('loadText').innerText = `💀 Menulis script untuk: ${theme.substring(0, 50)}...`;
+        // Pilih ide pertama sebagai default (atau random)
+        const selectedIde = ideList[Math.floor(Math.random() * ideList.length)];
+        const selectedJudul = selectedIde.judul;
+        const selectedDeskripsi = selectedIde.deskripsi;
         
-        // Panggil fungsi utama dengan parameter
-        await generateSkeletonWithParams(theme, jumlahSceneManual);
+        document.getElementById('loadText').innerText = `💀 TAHAP 2: Menulis script untuk "${selectedJudul.substring(0, 50)}..."`;
+        
+        // TAHAP 2: Generate script berdasarkan judul
+        const scriptScenes = await generateScript(selectedJudul, jumlahSceneManual);
+        
+        if (!scriptScenes || scriptScenes.length === 0) {
+            throw new Error("Gagal mendapatkan script");
+        }
+        
+        // Gabungkan script jadi satu naskah
+        currentJudul = selectedJudul;
+        currentNaskah = scriptScenes.join(' ');
+        
+        document.getElementById('judulText').innerText = currentJudul;
+        document.getElementById('naskahUtama').innerText = currentNaskah;
+        
+        // Generate audio
+        if (elevenEnabled) {
+            document.getElementById('loadText').innerText = "🔊 Generate voice...";
+            try { 
+                await generateAudio(currentNaskah, false); 
+            } catch (audioError) {
+                document.getElementById('audioBox').innerHTML = `<div style="color:#b91c1c;">❌ Voice error: ${audioError.message}</div>`;
+                document.getElementById('audioBox').style.display = 'block';
+            }
+        } else {
+            document.getElementById('loadText').innerText = "⏸️ Voice disabled, lanjut ke scene...";
+            document.getElementById('audioBox').style.display = 'none';
+        }
+        
+        document.getElementById('loadText').innerText = `💀 TAHAP 3: Membuat prompt visual untuk ${scriptScenes.length} scene...`;
+        
+        const totalDurasi = scriptScenes.length * 8; // 8 detik per scene
+        const minutes = Math.floor(totalDurasi / 60);
+        const seconds = totalDurasi % 60;
+        document.getElementById('sceneInfo').innerHTML = `💀 ${scriptScenes.length} Scene × 8 detik = ${totalDurasi} detik | Ide: ${selectedDeskripsi}`;
+        
+        let sceneHtml = '';
+        
+        for(let i = 0; i < scriptScenes.length; i++) {
+            const sceneText = scriptScenes[i];
+            
+            // TAHAP 3: Generate visual prompt untuk setiap scene
+            const visualPrompt = await generateVisualPrompt(sceneText, i+1, scriptScenes.length);
+            
+            sceneData.push({ 
+                textToImage: visualPrompt,
+                originalText: sceneText,
+                fullPrompt: visualPrompt
+            });
+            
+            // Tentukan tipe scene untuk label
+            let sceneType = "ESKALASI";
+            if (i === 0) sceneType = "PEMBUKA";
+            else if (i === scriptScenes.length - 2) sceneType = "REALISASI";
+            else if (i === scriptScenes.length - 1) sceneType = "AKHIR";
+            
+            sceneHtml += `
+                <div class="scene-item skeleton-mode" data-scene="${i}">
+                    <div class="scene-number">💀 SCENE ${i+1} - ${sceneType}</div>
+                    <div class="scene-original"><small>📝 ${sceneText.substring(0, 100)}${sceneText.length > 100 ? '...' : ''}</small></div>
+                    
+                    <div class="prompt-section">
+                        <div class="prompt-label">🖼️ TEXT TO IMAGE</div>
+                        <div class="prompt-content" id="tti-${i}">${visualPrompt.substring(0, 150)}${visualPrompt.length > 150 ? '...' : ''}</div>
+                        <div class="scene-actions">
+                            <button onclick="copyTextToImage(${i})" class="copy-tti">📋 Copy Prompt</button>
+                            <button onclick="showFullPrompt(${i}, 'tti')" class="view-full">👁️ Lihat</button>
+                        </div>
+                    </div>
+                    
+                    <div class="scene-actions" style="margin-top: 8px;">
+                        <button onclick="copyNarasi(${i})" class="copy-narasi">📝 Copy Narasi</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        document.getElementById('sceneGrid').innerHTML = sceneHtml;
+        document.getElementById('copyPromptsBtn').style.display = 'block';
+        output.style.display = 'block';
+        
+        updateStats('gen');
+        updateStats('succ');
+        showNotif(`✅ ${scriptScenes.length} scene siap! Durasi: ${minutes} menit ${seconds} detik`);
 
     } catch (e) {
-        console.error("Generate error:", e);
-        if (typeof showNotif === 'function') {
-            showNotif("Error: " + e.message, "error");
-        }
-        if (typeof updateStats === 'function') updateStats('fail');
-        const load = document.getElementById('loading');
-        if (load) load.style.display = 'none';
+        updateStats('fail');
+        errBox.innerHTML = `<div class="error-box">❌ Error: ${e.message}</div>`;
+        console.error(e);
+    } finally {
+        load.style.display = 'none';
     }
 }
 
-// Ekspor ke global
-window.generateSkeleton = generateSkeleton;
+// Load ide yang sudah pernah digenerate (untuk mencegah duplikasi)
+loadGeneratedSkeletonIdeas();

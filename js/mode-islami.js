@@ -77,16 +77,21 @@ async function generateIslami() {
     sceneData = [];
     
     try {
-        document.getElementById('loadText').innerText = "🕌 Menggali kisah islami penuh hikmah...";
+        // AMBIL JUMLAH SCENE DARI SLIDER
+        const sceneSlider = document.getElementById('sceneSlider');
+        const jumlahSceneManual = parseInt(sceneSlider.value);
+        
+        document.getElementById('loadText').innerText = `🕌 Menggali kisah islami untuk ${jumlahSceneManual} scene...`;
         
         const systemNarasi = `Anda adalah pencerita kisah islami yang inspiratif. 
 Tugas: buat SATU narasi kisah islami dengan format berikut:
 
 [JUDUL] : judul menarik tentang kisah nabi, sahabat, atau peristiwa islami (pakai emoji)
 
-[NARASI] : Ceritakan kisah dengan struktur:
+[NARASI] : Ceritakan kisah dengan struktur yang terbagi menjadi ${jumlahSceneManual} bagian:
 - Pembukaan yang menarik
 - Inti kisah (apa yang terjadi)
+- Perkembangan cerita
 - Hikmah yang bisa diambil
 - Penutup yang mengena
 
@@ -98,10 +103,10 @@ Contoh tema:
 - Kisah Isra Miraj
 - Kisah keajaiban Al-Quran
 
-Gunakan bahasa Indonesia yang indah dan menggugah. Panjang cerita 150-200 kata.
+Gunakan bahasa Indonesia yang indah dan menggugah. Panjang cerita menyesuaikan dengan ${jumlahSceneManual} scene.
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPrompt = `Buat satu kisah islami yang inspiratif dan penuh hikmah. Bisa tentang nabi, sahabat, atau peristiwa bersejarah dalam Islam.`;
+        const userPrompt = `Buat satu kisah islami yang inspiratif dan penuh hikmah dengan ${jumlahSceneManual} scene. Bisa tentang nabi, sahabat, atau peristiwa bersejarah dalam Islam.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
         
@@ -129,7 +134,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
         document.getElementById('naskahUtama').innerText = currentNaskah;
         
         if (elevenEnabled) {
-            document.getElementById('loadText').innerText = "🔊 Generate voice Adam dengan style khidmat...";
+            document.getElementById('loadText').innerText = "🔊 Generate voice Adam...";
             
             try { 
                 await generateAudio(currentNaskah, true); 
@@ -142,14 +147,26 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
             document.getElementById('audioBox').style.display = 'none';
         }
         
-        document.getElementById('loadText').innerText = "✂️ Membagi kisah menjadi scene...";
+        document.getElementById('loadText').innerText = `✂️ Membagi kisah menjadi ${jumlahSceneManual} scene...`;
         
+        // Bagi naskah menjadi scene
         const kalimat = currentNaskah.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
-        const scenes = kalimat.length >= 3 ? kalimat : [currentNaskah];
+        const scenes = [];
         
-        const jumlahScene = scenes.length;
-        const totalDurasi = jumlahScene * DURASI_PER_SCENE;
-        document.getElementById('sceneInfo').innerHTML = `🕌 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik visual islami epik`;
+        // Jika kalimat kurang dari yang diminta, ulangi kalimat terakhir
+        for (let i = 0; i < jumlahSceneManual; i++) {
+            if (i < kalimat.length) {
+                scenes.push(kalimat[i] + '.');
+            } else {
+                // Ulangi kalimat terakhir jika kurang
+                scenes.push(kalimat[kalimat.length - 1] + ' (berlanjut)');
+            }
+        }
+        
+        const totalDurasi = jumlahSceneManual * 10; // 10 detik per scene
+        const minutes = Math.floor(totalDurasi / 60);
+        const seconds = totalDurasi % 60;
+        document.getElementById('sceneInfo').innerHTML = `🕌 ${jumlahSceneManual} Scene × 10 detik = ${totalDurasi} detik (${minutes} menit ${seconds} detik)`;
         
         document.getElementById('loadText').innerText = "🎨 Generate prompt visual islami...";
         
@@ -201,7 +218,7 @@ IMAGE TO VIDEO:
                 
                 sceneHtml += `
                     <div class="scene-item islami-mode" data-scene="${i}">
-                        <div class="scene-number">🕌 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
+                        <div class="scene-number">🕌 SCENE ${i+1} (10 detik)</div>
                         <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
                         
                         <div class="prompt-section">
@@ -244,7 +261,7 @@ IMAGE TO VIDEO:
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene kisah islami siap!`);
+        showNotif(`✅ ${jumlahSceneManual} scene kisah islami siap! (Durasi: ${minutes} menit ${seconds} detik)`);
 
     } catch (e) {
         updateStats('fail');

@@ -37,7 +37,7 @@
 
     <div class="container" id="mainContainer" style="display: none;">
         <div class="header">
-            <h1>⚡CONTENT ENGINE⚡ TRIPLE MODE</h1>
+            <h1>⚡CONTENT ENGINE • TRIPLE MODE⚡</h1>
             <div class="sub">PILIH MODE KONTEN ANDA</div>
         </div>
 
@@ -94,6 +94,34 @@
             <div class="status-mini">
                 <div class="status-item"><span class="status-dot" id="groqDot"></span><span id="groqStatus">STATUS: OFF</span></div>
                 <div class="status-item"><span class="status-dot" id="elevenDot"></span><span id="elevenStatus">STATUS: OFF</span></div>
+            </div>
+        </div>
+
+        <!-- SLIDER KONTROL JUMLAH ADEGAN - VERSI BAGUS -->
+        <div class="scene-slider-container">
+            <div class="slider-header">
+                <div class="slider-label">
+                    <i>📊</i>
+                    <span>Jumlah Adegan</span>
+                </div>
+                <div class="slider-value-container">
+                    <span class="slider-value" id="sceneCountValue">5</span>
+                    <span class="slider-unit">scene</span>
+                </div>
+            </div>
+            
+            <div class="slider-wrapper">
+                <input type="range" id="sceneSlider" class="scene-slider" min="3" max="15" value="5" step="1" oninput="updateSceneCount(this.value)">
+                
+                <div class="slider-markers" id="sliderMarkers">
+                    <!-- Markers akan di-generate oleh JavaScript -->
+                </div>
+            </div>
+            
+            <div class="duration-estimate" id="durationEstimate">
+                <span class="duration-icon">⏱️</span>
+                <span class="duration-text">Estimasi Durasi: <span id="durationMinutes">0</span> menit <span id="durationSeconds">50</span> detik</span>
+                <span class="duration-badge" id="durationBadge">50 detik</span>
             </div>
         </div>
         
@@ -162,7 +190,42 @@
     <script src="js/mode-islami.js"></script>
     
     <script>
-        // ==================== FUNGSI VALIDASI ACCESS KEY DENGAN PESAN ERROR ====================
+        // ==================== FUNGSI UNTUK SLIDER ====================
+        function updateSliderMarkers(value) {
+            const markers = [3, 5, 7, 10, 12, 15];
+            const markerContainer = document.getElementById('sliderMarkers');
+            
+            let html = '';
+            markers.forEach(marker => {
+                const isActive = marker <= value;
+                html += `
+                    <div class="marker-item">
+                        <div class="marker-dot ${isActive ? 'active' : ''}"></div>
+                        <div class="marker-label ${isActive ? 'active' : ''}">${marker}</div>
+                    </div>
+                `;
+            });
+            
+            markerContainer.innerHTML = html;
+        }
+
+        function updateSceneCount(value) {
+            document.getElementById('sceneCountValue').innerText = value;
+            
+            // Hitung estimasi durasi (10 detik per scene sebagai standar)
+            const totalSeconds = value * 10;
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            
+            document.getElementById('durationMinutes').innerText = minutes;
+            document.getElementById('durationSeconds').innerText = seconds;
+            document.getElementById('durationBadge').innerText = `${totalSeconds} detik`;
+            
+            // Update markers
+            updateSliderMarkers(value);
+        }
+
+        // ==================== FUNGSI VALIDASI ACCESS KEY ====================
         function validateAccessKey() {
             const inputKey = document.getElementById('accessKeyInput').value.trim();
             const errorDiv = document.getElementById('errorMessage');
@@ -170,10 +233,12 @@
             
             // Reset styling
             errorDiv.style.display = 'none';
+            errorDiv.style.animation = '';
             
             if (!inputKey) {
                 errorText.innerText = "Key tidak boleh kosong!";
                 errorDiv.style.display = 'block';
+                errorDiv.style.animation = 'shake 0.3s ease';
                 setTimeout(() => errorDiv.style.display = 'none', 3000);
                 return;
             }
@@ -196,11 +261,10 @@
                 console.log("❌ Key tidak ditemukan");
                 errorText.innerText = "KEY EXPIRED!";
                 errorDiv.style.display = 'block';
-                // Animasi shake
                 errorDiv.style.animation = 'shake 0.3s ease';
                 setTimeout(() => {
-                    errorDiv.style.animation = '';
                     errorDiv.style.display = 'none';
+                    errorDiv.style.animation = '';
                 }, 3000);
                 return;
             }
@@ -213,11 +277,10 @@
                 console.log("❌ Key sudah digunakan");
                 errorText.innerText = "KEY ALREADY USED!";
                 errorDiv.style.display = 'block';
-                // Animasi shake
                 errorDiv.style.animation = 'shake 0.3s ease';
                 setTimeout(() => {
-                    errorDiv.style.animation = '';
                     errorDiv.style.display = 'none';
+                    errorDiv.style.animation = '';
                 }, 3000);
                 return;
             }
@@ -227,7 +290,7 @@
                 console.log("✅ Key ready, akan diubah menjadi success");
                 
                 // Dapatkan device ID dari fungsi utama
-                const currentDeviceId = typeof deviceId !== 'undefined' ? deviceId : generateDeviceId?.() || 'unknown';
+                const currentDeviceId = typeof deviceId !== 'undefined' ? deviceId : (typeof generateDeviceId === 'function' ? generateDeviceId() : 'unknown');
                 
                 // Update status key jadi success
                 accessKeys[keyIndex].status = 'success';
@@ -261,11 +324,15 @@
                 console.log("❌ Status key tidak dikenal:", keyData.status);
                 errorText.innerText = "Status key tidak valid!";
                 errorDiv.style.display = 'block';
-                setTimeout(() => errorDiv.style.display = 'none', 3000);
+                errorDiv.style.animation = 'shake 0.3s ease';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                    errorDiv.style.animation = '';
+                }, 3000);
             }
         }
 
-        // ==================== FUNGSI SHOW NOTIF (jika belum ada) ====================
+        // ==================== FUNGSI SHOW NOTIF ====================
         function showNotif(msg, type = 'success') {
             const n = document.getElementById('notif');
             if (n) {
@@ -284,13 +351,21 @@
             document.getElementById('mainContainer').style.display = 'block';
         }
 
-        // ==================== INISIALISASI UTAMA ====================
+        // ==================== INISIALISASI ====================
         window.onload = async function() {
+            // Set default slider value
+            updateSceneCount(5);
+            
             // Cek apakah initApp ada
             if (typeof initApp === 'function') {
-                await initApp();
-                // Default mode fakta
-                switchMode('fakta');
+                try {
+                    await initApp();
+                    // Default mode fakta
+                    switchMode('fakta');
+                } catch (e) {
+                    console.error("Error initApp:", e);
+                    document.getElementById('accessKeyModal').style.display = 'flex';
+                }
             } else {
                 console.error("initApp tidak ditemukan! Pastikan file js/fungsi-utama.js terload.");
                 // Fallback: tampilkan modal key
@@ -302,6 +377,7 @@
         window.validateAccessKey = validateAccessKey;
         window.showNotif = showNotif;
         window.closeAccessModal = closeAccessModal;
+        window.updateSceneCount = updateSceneCount;
     </script>
 </body>
 </html>

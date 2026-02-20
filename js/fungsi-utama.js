@@ -146,27 +146,107 @@ function showErrorModal(msg) {
 
 function validateAccessKey() {
     const inputKey = document.getElementById('accessKeyInput').value.trim();
-    if (!inputKey) return showErrorModal("Key tidak boleh kosong!");
-    loadAccessKeys();
+    const errorDiv = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    
+    // Reset styling
+    errorDiv.style.display = 'none';
+    errorDiv.style.animation = '';
+    
+    if (!inputKey) {
+        errorText.innerText = "Key tidak boleh kosong!";
+        errorDiv.style.display = 'block';
+        errorDiv.style.animation = 'shake 0.3s ease';
+        setTimeout(() => errorDiv.style.display = 'none', 3000);
+        return;
+    }
+    
+    // Load access keys dari localStorage
+    const savedKeys = localStorage.getItem('access_keys');
+    let accessKeys = [];
+    if (savedKeys) {
+        accessKeys = JSON.parse(savedKeys);
+    }
+    
+    console.log("🔑 Mencari key:", inputKey);
+    console.log("📋 Semua keys:", accessKeys);
+    
+    // Cari key di database
     const keyIndex = accessKeys.findIndex(k => k.key === inputKey);
-    if (keyIndex === -1) return showErrorModal("Key Expired!");
+    
+    // KALAU KEY TIDAK DITEMUKAN
+    if (keyIndex === -1) {
+        console.log("❌ Key tidak ditemukan");
+        errorText.innerText = "KEY EXPIRED!";
+        errorDiv.style.display = 'block';
+        errorDiv.style.animation = 'shake 0.3s ease';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+            errorDiv.style.animation = '';
+        }, 3000);
+        return;
+    }
+    
     const keyData = accessKeys[keyIndex];
-    if (keyData.status === 'success') return showErrorModal("Key already used!");
+    console.log("✅ Key ditemukan:", keyData);
+    
+    // KALAU KEY SUDAH PERNAH DIPAKAI (status success)
+    if (keyData.status === 'success') {
+        console.log("❌ Key sudah digunakan");
+        errorText.innerText = "KEY ALREADY USED!";
+        errorDiv.style.display = 'block';
+        errorDiv.style.animation = 'shake 0.3s ease';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+            errorDiv.style.animation = '';
+        }, 3000);
+        return;
+    }
+    
+    // KALAU KEY SIAP DIPAKAI (status ready)
     if (keyData.status === 'ready') {
-        const currentDeviceId = deviceId;
+        console.log("✅ Key ready, akan diubah menjadi success");
+        
+        // Dapatkan device ID dari fungsi utama
+        const currentDeviceId = typeof deviceId !== 'undefined' ? deviceId : generateDeviceId?.() || 'unknown';
+        
+        // Update status key jadi success
         accessKeys[keyIndex].status = 'success';
         accessKeys[keyIndex].deviceId = currentDeviceId;
         accessKeys[keyIndex].usedAt = new Date().toISOString();
+        
+        // Simpan ke localStorage
         localStorage.setItem('access_keys', JSON.stringify(accessKeys));
+        console.log("💾 Key updated:", accessKeys[keyIndex]);
+        
+        // Daftarkan device
         const registeredDevices = JSON.parse(localStorage.getItem('registered_devices') || '{}');
-        registeredDevices[currentDeviceId] = { 
-            key: inputKey, 
-            registeredAt: new Date().toISOString() 
+        registeredDevices[currentDeviceId] = {
+            key: inputKey,
+            registeredAt: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            platform: navigator.platform
         };
         localStorage.setItem('registered_devices', JSON.stringify(registeredDevices));
-        showNotif("✅ Access granted!");
+        console.log("💾 Device registered:", registeredDevices[currentDeviceId]);
+        
+        showNotif("✅ Access granted! Selamat datang.");
         closeAccessModal();
-        checkAllStatus();
+        
+        // Panggil checkAllStatus jika ada
+        if (typeof checkAllStatus === 'function') {
+            checkAllStatus();
+        }
+        
+    } else {
+        console.log("❌ Status key tidak dikenal:", keyData.status);
+        errorText.innerText = "Status key tidak valid!";
+        errorDiv.style.display = 'block';
+        errorDiv.style.animation = 'shake 0.3s ease';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+            errorDiv.style.animation = '';
+        }, 3000);
     }
 }
 
@@ -302,7 +382,7 @@ async function callGroq(prompt, system) {
     return (await res.json()).choices[0].message.content;
 }
 
-// ==================== AUDIO GENERATION - ELEVEN V2 (TANPA EFEK) ====================
+// ==================== AUDIO GENERATION - ELEVEN V2 ====================
 async function generateAudio(text, useMaleVoice = false) {
     if (!elevenEnabled) {
         const audioBox = document.getElementById('audioBox');
@@ -333,7 +413,7 @@ async function generateAudio(text, useMaleVoice = false) {
         .substring(0, 2500);
     
     try {
-        // MENGGUNAKAN ELEVEN MULTILINGUAL V2 (TANPA EFEK STYLE)
+        // MENGGUNAKAN ELEVEN MULTILINGUAL V2
         const voiceSettings = {
             stability: 0.5,
             similarity_boost: 0.75,
@@ -379,14 +459,20 @@ async function generateAudio(text, useMaleVoice = false) {
     }
 }
 
-// ==================== COPY FUNCTIONS ====================
-function showNotif(msg) { 
-    let n = document.getElementById('notif'); 
-    n.innerText = msg; 
-    n.style.display = 'block'; 
-    setTimeout(() => n.style.display = 'none', 2000); 
+// ==================== SHOW NOTIF ====================
+function showNotif(msg, type = 'success') {
+    const n = document.getElementById('notif');
+    if (n) {
+        n.innerText = msg;
+        n.style.backgroundColor = type === 'success' ? '#22c55e' : '#ef4444';
+        n.style.display = 'block';
+        setTimeout(() => n.style.display = 'none', 2000);
+    } else {
+        alert(msg);
+    }
 }
 
+// ==================== COPY FUNCTIONS ====================
 function copyToClipboard(text, msg) {
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => showNotif(msg));
@@ -427,6 +513,46 @@ function copyImageToVideo(index) {
         showNotif("❌ Image-to-Video prompt tidak ditemukan");
     }
 }
+
+// ========== FUNGSI BARU UNTUK VIDEO PROMPT (MODE SKELETON) ==========
+
+// Copy Video Prompt (untuk mode skeleton)
+function copyVideoPrompt(index) {
+    if (sceneData[index] && sceneData[index].videoPrompt) {
+        copyToClipboard(sceneData[index].videoPrompt, `🎬 Scene ${index+1} Video Prompt copied!`);
+    } else {
+        showNotif("❌ Video prompt tidak ditemukan");
+    }
+}
+
+// Show full video prompt dalam modal
+function showFullVideoPrompt(index) {
+    if (!sceneData[index] || !sceneData[index].videoPrompt) {
+        showNotif("❌ Video prompt tidak ditemukan");
+        return;
+    }
+    
+    const content = sceneData[index].videoPrompt;
+    const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedForCopy = content.replace(/`/g, '\\`');
+    
+    const modal = document.createElement('div');
+    modal.className = 'prompt-modal';
+    modal.innerHTML = `
+        <div class="prompt-modal-content">
+            <button class="prompt-modal-close" onclick="this.closest('.prompt-modal').remove()">✕</button>
+            <div class="prompt-modal-title">Scene ${index+1} - TEXT TO VIDEO PROMPT</div>
+            <div class="prompt-modal-text">${escapedContent}</div>
+            <div class="prompt-modal-actions">
+                <button class="prompt-modal-btn copy" onclick="copyToClipboard(\`${escapedForCopy}\`, 'Video prompt copied!'); this.closest('.prompt-modal').remove()">📋 Copy</button>
+                <button class="prompt-modal-btn close" onclick="this.closest('.prompt-modal').remove()">Tutup</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// ========== AKHIR FUNGSI BARU ==========
 
 // Copy full prompt
 function copyFullPrompt(index) {
@@ -521,14 +647,27 @@ function copyAllITV() {
     }
 }
 
-// Copy all prompts (gabungan)
+// Copy all prompts (gabungan) - UPDATE untuk menangani videoPrompt
 function copyAllPrompts() {
     if (sceneData.length === 0) { 
         showNotif("❌ Belum ada prompt scene!"); 
         return; 
     }
     
-    if (sceneData[0] && sceneData[0].textToImage && sceneData[0].textToImage !== sceneData[0].prompt) {
+    // Cek apakah ini skeleton mode dengan videoPrompt
+    if (sceneData[0] && sceneData[0].videoPrompt) {
+        let allVideoPrompts = "";
+        sceneData.forEach((d, i) => {
+            allVideoPrompts += `[SCENE ${i+1} - VIDEO PROMPT]\n${d.videoPrompt}\n\n`;
+        });
+        copyToClipboard(allVideoPrompts, "📋 Semua video prompt copied!");
+        
+        document.getElementById('promptsPreview').innerHTML = `
+            <strong>Preview Video Prompts:</strong><br>${allVideoPrompts.substring(0,200)}...
+        `;
+    }
+    // Cek apakah ini mode dengan TTI/ITV
+    else if (sceneData[0] && sceneData[0].textToImage && sceneData[0].textToImage !== sceneData[0].prompt) {
         let allTTI = "";
         let allITV = "";
         
@@ -549,7 +688,8 @@ function copyAllPrompts() {
             <strong>Preview ITV:</strong><br>${allITV.substring(0,150)}...
         `;
     } else {
-        let promptsText = sceneData.map(d => d.prompt || d.textToImage).join('\n\n');
+        // Fallback ke prompt biasa
+        let promptsText = sceneData.map(d => d.prompt || d.textToImage || d.videoPrompt).join('\n\n');
         copyToClipboard(promptsText, "📋 Semua prompt scene copied!");
         document.getElementById('promptsPreview').innerHTML = `<strong>Preview:</strong> ${promptsText.substring(0,200)}...`;
     }
@@ -577,6 +717,7 @@ function copyAll() {
     sceneData.forEach((d, i) => {
         full += `[SCENE ${i+1} - ${DURASI_PER_SCENE} detik]\n`;
         full += `NARASI: ${d.originalText}\n`;
+        if (d.videoPrompt) full += `VIDEO PROMPT: ${d.videoPrompt}\n`;
         if (d.textToImage) full += `TEXT TO IMAGE: ${d.textToImage}\n`;
         if (d.imageToVideo) full += `IMAGE TO VIDEO: ${d.imageToVideo}\n`;
         full += `${'-'.repeat(40)}\n\n`;
@@ -617,8 +758,9 @@ function switchMode(mode) {
         document.getElementById('modeIndicator').innerHTML = '💀 Mode: Manusia Tengkorak';
         document.getElementById('genBtn').innerHTML = '💀 GENERATE SKELETON MODE';
         document.getElementById('genBtn').style.background = 'linear-gradient(135deg, #a855f7, #d946ef)';
-        document.getElementById('copyAllTTIBtn').style.display = 'block';
-        document.getElementById('copyAllITVBtn').style.display = 'block';
+        // Untuk skeleton, tombol TTI/ITV disembunyikan karena pakai videoPrompt langsung
+        document.getElementById('copyAllTTIBtn').style.display = 'none';
+        document.getElementById('copyAllITVBtn').style.display = 'none';
     } else if (mode === "islami") {
         document.getElementById('modeIslamiBtn').classList.add('active');
         document.getElementById('modeIndicator').innerHTML = '🕌 Mode: Kisah Islami';
@@ -665,7 +807,7 @@ function resetData() {
     location.reload();
 }
 
-// Ekspor fungsi ke global
+// ==================== EXPORT FUNCTIONS TO GLOBAL ====================
 window.saveGroq = saveGroq;
 window.saveEleven = saveEleven;
 window.validateAccessKey = validateAccessKey;
@@ -685,3 +827,6 @@ window.copyFullPrompt = copyFullPrompt;
 window.showFullPrompt = showFullPrompt;
 window.copyAllTTI = copyAllTTI;
 window.copyAllITV = copyAllITV;
+// Ekspor fungsi baru untuk video prompt
+window.copyVideoPrompt = copyVideoPrompt;
+window.showFullVideoPrompt = showFullVideoPrompt;

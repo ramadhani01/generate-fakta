@@ -33,7 +33,11 @@ async function generateSkeleton() {
     sceneData = [];
     
     try {
-        document.getElementById('loadText').innerText = "💀 AI mencari tema fresh...";
+        // AMBIL JUMLAH SCENE DARI SLIDER
+        const sceneSlider = document.getElementById('sceneSlider');
+        const jumlahSceneManual = parseInt(sceneSlider.value);
+        
+        document.getElementById('loadText').innerText = `💀 AI mencari tema fresh untuk ${jumlahSceneManual} scene...`;
         
         // Load ide yang sudah pernah digenerate
         loadGeneratedSkeletonIdeas();
@@ -89,7 +93,7 @@ Output HANYA tema dalam SATU KALIMAT (tanpa penjelasan lain):`;
             saveGeneratedSkeletonIdeas();
         }
         
-        document.getElementById('loadText').innerText = `💀 Tema ditemukan: ${randomTheme.substring(0, 50)}... Menulis narasi...`;
+        document.getElementById('loadText').innerText = `💀 Tema ditemukan: ${randomTheme.substring(0, 50)}... Menulis narasi untuk ${jumlahSceneManual} scene...`;
         
         const systemNarasi = `Anda adalah kreator konten video pendek dengan gaya "manusia tengkorak" yang ekstrem dan sinematik.
 
@@ -97,7 +101,7 @@ Tugas: Buat SATU narasi dengan format berikut:
 
 [JUDUL] : Kalimat clickbait "Seberapa [kuat/lama/banyak] ... sampai ...?" (pakai emoji, maks 60 karakter)
 
-[NARASI] : Ceritakan perubahan fisik yang terjadi secara PROGRESIF dengan struktur:
+[NARASI] : Ceritakan perubahan fisik yang terjadi secara PROGRESIF dengan ${jumlahSceneManual} scene, dengan struktur:
 
 "Awalnya cuma [gejala awal]. Setelah [waktu], [penjelasan detail]. Selama [waktu] berikutnya, [penjelasan lebih ekstrem]. Memasuki [waktu], [kondisi semakin parah]. Di titik [waktu], [puncak keparahan]. Akhirnya, [kondisi paling ekstrem/kematian]."
 
@@ -108,7 +112,7 @@ Kriteria WAJIB:
 - Gunakan variasi waktu: detik, menit, jam, hari (sesuai tema)
 - Gambarkan sensasi fisik: nyeri, mati rasa, kram, panas, dingin, getaran, dll
 - Gambarkan efek pada TUBUH: otot, tulang, saraf, organ dalam
-- Narasi total 150-200 kata (cukup panjang untuk detail, tidak terlalu pendek)
+- Narasi total menyesuaikan dengan ${jumlahSceneManual} scene
 - JANGAN gunakan kata "Level 1, Level 2" atau angka level
 - Akhiri dengan kondisi paling ekstrem/kematian
 - Bahasa Indonesia yang deskriptif, sinematik, dan mengalir
@@ -118,7 +122,7 @@ Contoh gaya (BUKAN untuk dicopy, tapi referensi struktur):
 
 Output JSON murni: { "judul": "string", "naskah": "string" }`;
         
-        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Narasi progresif dengan detail setiap tahapan, total 150-200 kata, tanpa level angka.`;
+        const userPrompt = `Buat narasi "manusia tengkorak" dengan tema: ${randomTheme}. Narasi progresif dengan detail setiap tahapan, total ${jumlahSceneManual} scene, tanpa level angka.`;
         
         const raw = await callGroq(userPrompt, systemNarasi);
         
@@ -173,7 +177,7 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
             document.getElementById('audioBox').style.display = 'none';
         }
         
-        document.getElementById('loadText').innerText = "✂️ Membagi naskah menjadi scene...";
+        document.getElementById('loadText').innerText = `✂️ Membagi naskah menjadi ${jumlahSceneManual} scene...`;
         
         // Bagi naskah menjadi scene berdasarkan kalimat
         const kalimat = currentNaskah
@@ -181,13 +185,24 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
             .map(s => s.trim())
             .filter(s => s.length > 15);
         
-        const scenes = kalimat.length >= 3 ? kalimat : [currentNaskah];
+        const scenes = [];
         
-        const jumlahScene = scenes.length;
-        const totalDurasi = jumlahScene * DURASI_PER_SCENE;
-        document.getElementById('sceneInfo').innerHTML = `💀 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik visual tengkorak sinematik (Tema: ${randomTheme.substring(0, 40)}...)`;
+        // Jika kalimat kurang dari yang diminta, ulangi kalimat terakhir
+        for (let i = 0; i < jumlahSceneManual; i++) {
+            if (i < kalimat.length) {
+                scenes.push(kalimat[i] + '.');
+            } else {
+                // Ulangi kalimat terakhir jika kurang
+                scenes.push(kalimat[kalimat.length - 1] + ' (berlanjut)');
+            }
+        }
         
-        document.getElementById('loadText').innerText = "🎨 Generate prompt...";
+        const totalDurasi = jumlahSceneManual * 8; // 8 detik per scene untuk skeleton
+        const minutes = Math.floor(totalDurasi / 60);
+        const seconds = totalDurasi % 60;
+        document.getElementById('sceneInfo').innerHTML = `💀 ${jumlahSceneManual} Scene × 8 detik = ${totalDurasi} detik (${minutes} menit ${seconds} detik) | Tema: ${randomTheme.substring(0, 40)}...`;
+        
+        document.getElementById('loadText').innerText = "🎨 Generate prompt visual skeleton (TTI & ITV)...";
         
         let sceneHtml = '';
         
@@ -254,7 +269,7 @@ IMAGE TO VIDEO:
                 
                 sceneHtml += `
                     <div class="scene-item skeleton-mode" data-scene="${i}">
-                        <div class="scene-number">💀 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
+                        <div class="scene-number">💀 SCENE ${i+1} (8 detik)</div>
                         <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
                         
                         <div class="prompt-section">
@@ -297,7 +312,7 @@ IMAGE TO VIDEO:
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene skeleton dengan tema fresh: ${randomTheme.substring(0, 60)}...`);
+        showNotif(`✅ ${jumlahSceneManual} scene skeleton dengan tema fresh siap! (Durasi: ${minutes} menit ${seconds} detik)`);
 
     } catch (e) {
         updateStats('fail');

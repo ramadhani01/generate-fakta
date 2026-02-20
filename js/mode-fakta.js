@@ -16,10 +16,14 @@ async function generateFaktaUnik() {
     sceneData = [];
     
     try {
+        // AMBIL JUMLAH SCENE DARI SLIDER
+        const sceneSlider = document.getElementById('sceneSlider');
+        const jumlahSceneManual = parseInt(sceneSlider.value);
+        
         if (elevenEnabled) {
-            document.getElementById('loadText').innerText = "🧠 Mencari ide fakta unik...";
+            document.getElementById('loadText').innerText = `🧠 Mencari ide fakta unik untuk ${jumlahSceneManual} scene...`;
         } else {
-            document.getElementById('loadText').innerText = "🧠 Mencari ide fakta unik (voice OFF)...";
+            document.getElementById('loadText').innerText = `🧠 Mencari ide fakta unik untuk ${jumlahSceneManual} scene (voice OFF)...`;
         }
         
         const topics = [
@@ -96,15 +100,26 @@ Output JSON murni: { "judul": "string", "naskah": "string" }`;
             document.getElementById('audioBox').style.display = 'none';
         }
         
-        document.getElementById('loadText').innerText = "✂️ Membagi naskah menjadi scene...";
+        document.getElementById('loadText').innerText = `✂️ Membagi naskah menjadi ${jumlahSceneManual} scene...`;
         
-        // Bagi naskah menjadi scene
+        // Bagi naskah menjadi scene berdasarkan jumlah dari slider
         const kalimat = currentNaskah.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
-        const scenes = kalimat.length >= 2 ? kalimat : [currentNaskah];
+        const scenes = [];
         
-        const jumlahScene = scenes.length;
-        const totalDurasi = jumlahScene * DURASI_PER_SCENE;
-        document.getElementById('sceneInfo').innerHTML = `🎬 ${jumlahScene} Scene × ${DURASI_PER_SCENE} detik = ${totalDurasi} detik video`;
+        // Jika kalimat kurang dari yang diminta, ulangi kalimat terakhir
+        for (let i = 0; i < jumlahSceneManual; i++) {
+            if (i < kalimat.length) {
+                scenes.push(kalimat[i] + '.');
+            } else {
+                // Ulangi kalimat terakhir jika kurang
+                scenes.push(kalimat[kalimat.length - 1] + ' (berlanjut)');
+            }
+        }
+        
+        const totalDurasi = jumlahSceneManual * 10; // 10 detik per scene
+        const minutes = Math.floor(totalDurasi / 60);
+        const seconds = totalDurasi % 60;
+        document.getElementById('sceneInfo').innerHTML = `🎬 ${jumlahSceneManual} Scene × 10 detik = ${totalDurasi} detik (${minutes} menit ${seconds} detik)`;
         
         document.getElementById('loadText').innerText = "🎨 Generate prompt visual (TTI & ITV)...";
         
@@ -157,7 +172,7 @@ IMAGE TO VIDEO:
                 
                 sceneHtml += `
                     <div class="scene-item fakta-mode" data-scene="${i}">
-                        <div class="scene-number">🎬 SCENE ${i+1} (${DURASI_PER_SCENE} detik)</div>
+                        <div class="scene-number">🎬 SCENE ${i+1} (10 detik)</div>
                         <div class="scene-original"><small>📝 ${scenes[i].substring(0, 80)}${scenes[i].length > 80 ? '...' : ''}</small></div>
                         
                         <div class="prompt-section">
@@ -203,7 +218,7 @@ IMAGE TO VIDEO:
         
         updateStats('gen');
         updateStats('succ');
-        showNotif(`✅ ${jumlahScene} scene fakta unik siap!`);
+        showNotif(`✅ ${jumlahSceneManual} scene fakta unik siap! (Durasi: ${minutes} menit ${seconds} detik)`);
 
     } catch (e) {
         updateStats('fail');

@@ -14,8 +14,8 @@ let currentJudul = "";
 
 // VOICE ID RACHEL (Perempuan) dan ADAM (Cowok)
 const VOICE_IDS = {
-    siti: "EXAVITQu4vr4xnSDxMaL", // siti - Perempuan
-    agos: "pNInz6obpgDQGcFmaJgB",   // agos - Cowok
+    rachel: "EXAVITQu4vr4xnSDxMaL", // rachel - Perempuan
+    adam: "pNInz6obpgDQGcFmaJgB",   // adam - Cowok
 };
 
 const DURASI_PER_SCENE = 10;
